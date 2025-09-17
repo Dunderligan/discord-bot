@@ -6,13 +6,11 @@ from discord.ext import commands
 
 load_dotenv()
 token = os.getenv('TOKEN')
+server_id = os.getenv('SERVER_ID')
+
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-
-server_id = 1417952384809963564
-
-bot = commands.Bot(command_prefix="$", description="Tournament host", intents=intents)
 tree = app_commands.CommandTree(client)
 
 @tree.command(
@@ -20,9 +18,7 @@ tree = app_commands.CommandTree(client)
         description="Creates text channels",
         guild=discord.Object(id=server_id)
 )
-async def create_text_channels(
-    interaction: discord.Interaction 
-):
+async def create_text_channels(interaction: discord.Interaction):
     teams = ["Cool Sharks", "Missarna på Tunnelbanan", "Ocustik", "Njukas+4"]
     
     for t in teams:
