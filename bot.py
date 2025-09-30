@@ -3,8 +3,12 @@ import discord
 import os
 import psycopg2
 import util
+import datetime
 from dotenv import load_dotenv
 from discord import app_commands
+
+DIVISIONS: int = 3
+SEASONS: int = 7
 
 load_dotenv()
 token = os.getenv('TOKEN')
@@ -24,6 +28,10 @@ tree = app_commands.CommandTree(client)
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
+    cursor.execute(f"SELECT name FROM division")
+
+    global DIVISIONS
+    DIVISIONS = cursor.fetchall()
     await tree.sync(guild=discord.Object(id=server_id))
 
 @tree.command(
@@ -82,7 +90,74 @@ async def create_voice_channel(guild: discord.Guild, team: str, team_role: disco
         category = await guild.create_category(division)
     return await guild.create_voice_channel(team, category=category, overwrites=overwrites)
 
+@tree.command(
+        name="print_standing", 
+        description="Prints standing for chosen division", 
+        guild=discord.Object(id=server_id))
+async def print_standing(interaction: discord.Interaction, season: app_commands.Range[int, 1, SEASONS+1], division: app_commands.Range[int, 1, DIVISIONS+1]):
+    await interaction.response.defer()
+    cursor.execute(f"""
+                    SELECT 
+                        d.name AS "division_name",
+                        m.team_a_score,
+                        m.team_b_score,
+                        ra.name AS "roster_a_name",
+                        rb.name AS "roster_b_name"
+                    FROM division d
+                        JOIN "group" g ON g.division_id = d.id
+                        JOIN "match" m ON m.group_id = g.id
+                        JOIN "roster" ra ON m.roster_a_id = ra.id
+                        JOIN "roster" rb ON m.roster_b_id = rb.id
+                        JOIN "season" s ON d.season_id = s.id
+                    WHERE s.slug = 'test'
+                        AND d.name = 'Division {division}'
+                   """)
+    matches = cursor.fetchall()
 
+    division_scores: dict[str: dict[str: int]] = {}
+    for match in matches:
+        if not match[0] in division_scores:
+            division_scores[match[0]] = {}
+
+        if division_scores[match[0]].get(match[3]):
+            division_scores[match[0]][match[3]] += match[1]
+        else:
+            division_scores[match[0]][match[3]] = match[1]
+
+        if division_scores[match[0]].get(match[4]):
+            division_scores[match[0]][match[4]] += match[2]
+        else:
+            division_scores[match[0]][match[4]] = match[2]
+    
+    tables: dict[str: str] = {}
+    for division in division_scores:
+        sorted_scores = {}
+        for key in sorted(division_scores[division], key=division_scores[division].get, reverse=True):
+            sorted_scores[key] = division_scores[division][key]
+        division_scores[division] = sorted_scores
+
+        #tables[division] = ""
+        embed: discord.Embed = discord.Embed(title=division)
+        teams: str = ""
+        scores: str = ""
+        winlossdraws: str = ""
+
+        for team in division_scores[division]:
+            score = division_scores[division][team]
+            #tables[division] += f"{team}: {score} poäng | {score}W | {9-score}L\n"
+            teams += f"{team}\n"
+            winlossdraws += f"{score}-{9-score}-0\n"
+            scores += f"{score}p\n"
+            
+        embed.add_field(name="Lag", value=f"{teams}", inline=True)
+        embed.add_field(name="W/L/D", value=f"{winlossdraws}", inline=True)
+        embed.add_field(name="Poäng", value=f"{scores}", inline=True)
+        embed.timestamp = datetime.datetime.now()
+        await interaction.channel.send(embed=embed)
+
+    #for division in tables:
+    #    await interaction.channel.send(f"&\n**{division}**:\n{tables[division]}")
+    await interaction.followup.send("Finished!")
 
 #command to create new text channels for the teams; currently creating team roles as well, which will be moved to its own function
 @tree.command(
@@ -139,14 +214,15 @@ async def remove_team_roles(interaction: discord.Interaction):
 @app_commands.describe(season="säsong lag hämtas från")
 async def create_voice_channels(interaction: discord.Interaction, season:str):
     await interaction.response.defer()
-    cursor.execute(f"""SELECT 
-                   r.name, 
-                   d.name as division_name
-                   FROM roster r 
-                   JOIN "group" g ON g.id = r.group_id
-                   JOIN division d ON d.id = g.division_id 
-                   WHERE season_slug = '{season}' 
-                   ORDER BY division_name, r.name
+    cursor.execute(f"""
+                    SELECT 
+                        r.name, 
+                        d.name as division_name
+                    FROM roster r 
+                        JOIN "group" g ON g.id = r.group_id
+                        JOIN division d ON d.id = g.division_id 
+                    WHERE season_slug = '{season}' 
+                    ORDER BY division_name, r.name
                    """)
     teams = cursor.fetchall()
 
