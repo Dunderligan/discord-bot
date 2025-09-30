@@ -4,6 +4,7 @@ import os
 import psycopg2
 import util
 import datetime
+import requests
 from dotenv import load_dotenv
 from discord import app_commands
 
@@ -45,7 +46,8 @@ async def setup_teams(interaction: discord.Interaction, text_category: discord.C
     cursor.execute(f"""SELECT 
                    r.name, 
                    d.name as division_name,
-                   r.id
+                   r.id,
+                   r.slug
                    FROM roster r 
                    JOIN "group" g ON g.id = r.group_id
                    JOIN division d ON d.id = g.division_id 
@@ -60,10 +62,11 @@ async def setup_teams(interaction: discord.Interaction, text_category: discord.C
         team_text_channel = await create_text_channel(interaction.guild, t[0], team_role, text_category)
         
         embed: discord.Embed = discord.Embed(title=t[0])
-        embed.set_image(url=f"https://cdn.kesomannen.com/cdn-cgi/image/format=auto,fit=scale-down,width=256/dunderligan/logos/{t[2]}.png")
+        embed.set_image(url=get_team_logo_link(t[2], 256))
         embed.description = f"Välkommen till er nya kanal! Här kommer er direktkontakt med admins ske.\n<@&{team_role.id}>"
         await team_text_channel.send(embed=embed)
         await create_voice_channel(interaction.guild, t[0], team_role, t[1])
+        await create_emote(interaction, t[3], t[2])
     await interaction.followup.send("Finished setting up server.")
 
 async def create_team_role(guild: discord.Guild, team: str) -> discord.Role:
@@ -89,6 +92,14 @@ async def create_voice_channel(guild: discord.Guild, team: str, team_role: disco
     if not category:
         category = await guild.create_category(division)
     return await guild.create_voice_channel(team, category=category, overwrites=overwrites)
+
+async def create_emote(interaction: discord.Interaction, team: str, teamid: str):
+    image = requests.get(get_team_logo_link(teamid, 128)).content
+    await interaction.guild.create_custom_emoji(name = team.replace("+","_").replace("-","_"), image = image)
+    
+def get_team_logo_link(team: str, size: int) -> str:
+    return f"https://cdn.kesomannen.com/cdn-cgi/image/format=png,fit=scale-down,width={size}/dunderligan/logos/{team}.png"
+    
 
 @tree.command(
         name="print_standing", 
@@ -137,7 +148,7 @@ async def print_standing(interaction: discord.Interaction, season: app_commands.
         division_scores[division] = sorted_scores
 
         #tables[division] = ""
-        embed: discord.Embed = discord.Embed(title=division)
+        embed: discord.Embed = discord.Embed(title=f"Säsong {season} - {division}")
         teams: str = ""
         scores: str = ""
         winlossdraws: str = ""
