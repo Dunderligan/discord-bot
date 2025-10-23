@@ -11,6 +11,8 @@ from discord import app_commands
 DIVISIONS: int = 3
 SEASONS: int = 7
 
+RANKS: list = ["bronze", "silver", "guld", "plat", "dia", "master", "gm", "champion"]
+
 load_dotenv()
 token = os.getenv('TOKEN')
 server_id = os.getenv('SERVER_ID')
@@ -100,6 +102,41 @@ async def create_emote(interaction: discord.Interaction, team: str, teamid: str)
 def get_team_logo_link(team: str, size: int) -> str:
     return f"https://cdn.kesomannen.com/cdn-cgi/image/format=png,fit=scale-down,width={size}/dunderligan/logos/{team}.png"
     
+
+@tree.command(
+        name="print_roster", 
+        description="Prints roster for given team", 
+        guild=discord.Object(id=server_id))
+async def print_roster(interaction: discord.Interaction, team: str):
+    await interaction.response.defer()
+    roster_message: str = ""
+    cursor.execute(f"""
+                    SELECT p.name AS "battletag", p.rank AS "rank", p.role AS "role"
+                   FROM team
+                    """)
+
+    cursor.execute(f"""
+                    SELECT 
+                        d.name AS "division_name",
+                        m.team_a_score,
+                        m.team_b_score,
+                        ra.name AS "roster_a_name",
+                        rb.name AS "roster_b_name"
+                    FROM division d
+                        JOIN "group" g ON g.division_id = d.id
+                        JOIN "match" m ON m.group_id = g.id
+                        JOIN "roster" ra ON m.roster_a_id = ra.id
+                        JOIN "roster" rb ON m.roster_b_id = rb.id
+                        JOIN "season" s ON d.season_id = s.id
+                    WHERE s.slug = 'test'
+                        AND d.name = 'Division {division}'
+                   """)
+    matches = cursor.fetchall()
+
+    await interaction.channel.send(f"{team.capitalize()}\n")
+    
+    await interaction.followup.send("Finished!")
+
 
 @tree.command(
         name="print_standing", 
