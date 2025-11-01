@@ -12,3 +12,5 @@ include in .env:
     TOKEN, #discord app token
     SERVER_ID, #id to server bot is run in
     POSTGRES_LINK #link to postgres-database
+    ADMIN_ID # id of role user needs to run some commands
+    TEXT_CATEGORY # category to put text-channels in

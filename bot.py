@@ -1,20 +1,14 @@
 #https://discordpy.readthedocs.io/en/latest/api.html
-import os
 import discord
-import util
-import datetime
+import os
+import json
 import psycopg2
 import requests
+import datetime
 import typst
-import json
 import enum
 from dotenv import load_dotenv
 from discord import app_commands
-
-DIVISIONS: int = 3
-SEASONS: int = 7
-
-RANKS: list = ['bronze', 'silver', 'guld', 'plat', 'dia', 'master', 'gm', 'champion']
 
 class CLEARABLE_OBJECT(str, enum.Enum):
     VoiceChannels = 'VOICE'
@@ -31,7 +25,8 @@ postgres_link = os.getenv('POSTGRES_LINK')
 db_conn = psycopg2.connect(postgres_link)
 cursor = db_conn.cursor()
 
-stop_role = 'LAG_ROLLER_UNDER'
+admin_role_id: int = int(os.getenv('ADMIN_ID'))
+text_category: discord.CategoryChannel
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -41,16 +36,13 @@ tree = app_commands.CommandTree(client)
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
-    cursor.execute(f'SELECT name FROM division')
-
-    global DIVISIONS
-    DIVISIONS = cursor.fetchall()
     await tree.sync(guild=discord.Object(id=server_id))
 
 @tree.command(
         name='remove_old_objects', 
         description='Removes all old objects of a given type, that has previously been created by this bot.', 
         guild=discord.Object(id=server_id))
+@app_commands.checks.has_role(admin_role_id)
 @app_commands.describe(alternative="Objects to remove")
 async def remove_old_objects(interaction: discord.Interaction, alternative: CLEARABLE_OBJECT) -> None:
     await interaction.response.defer()
@@ -82,6 +74,7 @@ async def remove_old_objects(interaction: discord.Interaction, alternative: CLEA
                 else:
                     print(f"Couldn't find role with ID: {o}")
             old_objects["roles"] = []
+        save_new_objects(old_objects)
         await interaction.followup.send(f'Finished removing all old {alternative} objects.')
     else:
         await interaction.followup.send(f'Did not find any objects in {CLEAR_FROM_PATH} to remove.')
@@ -100,28 +93,36 @@ def load_old_objects() -> dict:
         name='create_new_objects', 
         description='Creates a new role, text channel, and voice channel for each team in the given season.', 
         guild=discord.Object(id=server_id))
+@app_commands.checks.has_role(admin_role_id)
 @app_commands.describe(season="Season to get teams from.")
 async def create_new_objects(interaction: discord.Interaction, season: str) -> None:
     await interaction.response.defer()
+    text_category: discord.CategoryChannel = discord.utils.find(lambda category: category.id == int(os.getenv('TEXT_CATEGORY')), interaction.guild.categories)
     teams = get_teams(season)
     new_objects = {"text": [], "voice": [], "roles": []}
 
     for t in teams:
+        # creates a role
         formatted_name = format_name(t[0])
-        new_role: discord.Role = await create_new_role(interaction.guild, formatted_name)
+        new_role: discord.Role = await interaction.guild.create_role(name=f'{t[0]}')
         new_objects["roles"].append(new_role.id)
 
-        # TODO solve where text channels should be placed
-        new_text_channel: discord.TextChannel = await create_text_channel(interaction.guild, formatted_name, new_role)
+        # creates a text channel in assigned category
+        channel_permissions: dict = get_role_permissions(interaction.guild, new_role)
+        new_text_channel: discord.TextChannel = await interaction.guild.create_text_channel(formatted_name, category=text_category, overwrites=channel_permissions)
         new_objects["text"].append(new_text_channel.id)
 
-        # TODO replace with typst image?
+        # sends embed in newly created text channel
         embed: discord.Embed = discord.Embed(title = formatted_name)
         embed.set_image(url = get_team_logo_link(t[2], 256))
         embed.description = f"Välkommen till ert lags kanal! Här kommer er direktkontakt med admins ske.\n<@&{new_role.id}>"
         await new_text_channel.send(embed = embed)
 
-        new_voice_channel: discord.VoiceChannel = await create_voice_channel(interaction.guild, formatted_name, new_role, t[1])
+        # creates a voice channel
+        voice_category = discord.utils.get(interaction.guild.categories, name=t[1])
+        if not voice_category:
+            voice_category = await interaction.guild.create_category(t[1])
+        new_voice_channel: discord.VoiceChannel = await interaction.guild.create_voice_channel(t[0], category=voice_category, overwrites=channel_permissions)
         new_objects["voice"].append(new_voice_channel.id)
 
     save_new_objects(new_objects)
@@ -141,82 +142,42 @@ def get_teams(season: str) -> dict:
                         JOIN "group" g ON g.id = r.group_id
                         JOIN division d ON d.id = g.division_id
                     WHERE season_slug = '{season}'
-                    ORDER BY division_name, r.name""")
+                    ORDER BY division_name, r.name
+                    LIMIT 8""")
     teams = cursor.fetchall()
     return teams
 
 def format_name(name: str) -> str:
-    # TODO format name to make it discord-friendly
-    return name
+    allowed_characters = "abcdefghijklmnopqrstuvwxyzåäö0123456789-"
+    formatted_name = ""
+    for c in name:
+        char = c.lower()
+        if char in allowed_characters:
+            formatted_name += char
+        else:
+            formatted_name += "-"
+    return formatted_name.lower()
 
-########## OLD CODE vvv
-
-async def create_new_role(guild: discord.Guild, team: str) -> discord.Role:
-    team_name = team
-    new_role = await guild.create_role(name=f'[{team_name}]')
-    return new_role
-
-async def create_text_channel(guild: discord.Guild, team: str, new_role: discord.Role, text_category: discord.CategoryChannel) -> discord.TextChannel:
-    overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            new_role: discord.PermissionOverwrite(view_channel=True),
-            guild.self_role: discord.PermissionOverwrite(view_channel=True)
-        }
-    return await guild.create_text_channel(team, category=text_category, overwrites=overwrites)
-
-async def create_voice_channel(guild: discord.Guild, team: str, new_role: discord.Role, division: str) -> discord.VoiceChannel:
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(view_channel=False,connect=False),
-        new_role: discord.PermissionOverwrite(view_channel=True,connect=True),
-        guild.self_role: discord.PermissionOverwrite(view_channel=True,connect=True)
+def get_role_permissions(guild: discord.Guild, role: discord.Role) -> dict:
+    admin_role: discord.Role = discord.utils.find(lambda r: r.id == admin_role_id, guild.roles)
+    overwrites: dict[discord.Role, discord.PermissionOverwrite] = {
+        guild.default_role: discord.PermissionOverwrite(view_channel=False, connect=False),
+        role: discord.PermissionOverwrite(view_channel=True, connect=True),
+        admin_role: discord.PermissionOverwrite(view_channel=True, connect=True)
     }
-    category = discord.utils.get(guild.categories, name=division)
-    if not category:
-        category = await guild.create_category(division)
-    return await guild.create_voice_channel(team, category=category, overwrites=overwrites)
+    return overwrites
 
-async def create_emote(interaction: discord.Interaction, team: str, teamid: str):
-    image = requests.get(get_team_logo_link(teamid, 128)).content
-    await interaction.guild.create_custom_emoji(name = team.replace('+','_').replace('-','_'), image = image)
-    
 def get_team_logo_link(team: str, size: int) -> str:
     return f'https://cdn.kesomannen.com/cdn-cgi/image/format=png,fit=scale-down,width={size}/dunderligan/logos/{team}.png'
-    
+
+########## OLD CODE vvv
+"""
 
 @tree.command(
         name='print_roster', 
         description='Prints roster for given team', 
         guild=discord.Object(id=server_id))
 async def print_roster(interaction: discord.Interaction, team: str):
-    await interaction.response.defer()
-    roster_message: str = '
-    cursor.execute(f'
-                    SELECT p.name AS 'battletag', p.rank AS 'rank', p.role AS 'role'
-                   FROM team
-                    ')
-
-    cursor.execute(f'
-                    SELECT 
-                        d.name AS 'division_name',
-                        m.team_a_score,
-                        m.team_b_score,
-                        ra.name AS 'roster_a_name',
-                        rb.name AS 'roster_b_name'
-                    FROM division d
-                        JOIN 'group' g ON g.division_id = d.id
-                        JOIN 'match' m ON m.group_id = g.id
-                        JOIN 'roster' ra ON m.roster_a_id = ra.id
-                        JOIN 'roster' rb ON m.roster_b_id = rb.id
-                        JOIN 'season' s ON d.season_id = s.id
-                    WHERE s.slug = 'test'
-                        AND d.name = 'Division {division}'
-                   ')
-    matches = cursor.fetchall()
-
-    await interaction.channel.send(f'{team.capitalize()}\n')
-    
-    await interaction.followup.send('Finished!')
-
 
 @tree.command(
         name='print_standing', 
@@ -287,92 +248,6 @@ async def print_standing(interaction: discord.Interaction, season: app_commands.
     #    await interaction.channel.send(f'&\n**{division}**:\n{tables[division]}')
     await interaction.followup.send('Finished!')
 
-#command to create new text channels for the teams; currently creating team roles as well, which will be moved to its own function
-@tree.command(
-        name='create_channels', 
-        description='Creates text channels', 
-        guild=discord.Object(id=server_id))
-@app_commands.describe(destination_category='ID till kategori som kanaler ska ligga under', season='säsong lag hämtas från')
-async def create_text_channels(interaction: discord.Interaction, destination_category: str, season:str):
-    await interaction.response.defer()
-    selected_category = discord.utils.get(interaction.guild.categories, name=destination_category)
-    cursor.execute(f'SELECT name FROM roster WHERE season_slug = '{season}' LIMIT 10')
-    teams = cursor.fetchall()
-    
-    for t in teams:
-        new_role = create_new_role(interaction, t[0])
-        overwrites = {
-            interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            new_role: discord.PermissionOverwrite(view_channel=True),
-            interaction.guild.self_role: discord.PermissionOverwrite(view_channel=True)
-        }
-        team_name = new_role.name
-
-        new_channel = await interaction.guild.create_text_channel(team_name, category=selected_category, overwrites=overwrites)
-        if new_channel:
-            await new_channel.send(f'Välkommen till {team_name} klubbstuga! Här kommer admins kontakta er med viktig information, och här kan även ni skriva direkt till dem vid funderingar.')
-
-    team_amount = len(teams)
-    await interaction.followup.send(f'Finished creating {team_amount} channels.')
-
-#command to remove old team roles from previous seasons
-#team roles has to start with '[' to be removed, as well as lie underneath the stop_role
-@tree.command(
-    name='remove_new_roles',
-    description='removes old team roles', 
-    guild=discord.Object(id=server_id))
-async def remove_new_roles(interaction: discord.Interaction):
-    await interaction.response.defer()
-    c = 0
-    for r in interaction.guild.roles:
-        if r.name == stop_role:
-            break
-        elif r == interaction.guild.default_role:
-            continue
-        elif r.name.startswith('['):
-            print(f'Deleted {r.name}!')
-            await r.delete()
-            c += 1
-    await interaction.followup.send(f'Finished removing {c} team roles.')
-    
-@tree.command(
-        name='create_voice_channels', 
-        description='Creates voice channels', 
-        guild=discord.Object(id=server_id))
-@app_commands.describe(season='säsong lag hämtas från')
-async def create_voice_channels(interaction: discord.Interaction, season:str):
-    await interaction.response.defer()
-    cursor.execute(f'
-                    SELECT 
-                        r.name, 
-                        d.name as division_name
-                    FROM roster r 
-                        JOIN 'group' g ON g.id = r.group_id
-                        JOIN division d ON d.id = g.division_id 
-                    WHERE season_slug = '{season}' 
-                    ORDER BY division_name, r.name
-                   ')
-    teams = cursor.fetchall()
-
-    division_categories: dict[str: discord.CategoryChannel] = {}
-    for t in teams:
-        new_role = discord.utils.get(interaction.guild.roles, name=f'[{t[0]}]')
-        overwrites = {
-            interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False,connect=False),
-            new_role: discord.PermissionOverwrite(view_channel=True,connect=True),
-            interaction.guild.self_role: discord.PermissionOverwrite(view_channel=True,connect=True)
-        }
-        if not division_categories.get(t[1]):
-            category = discord.utils.get(interaction.guild.categories, name=t[1])
-            if not category:
-                category = await interaction.guild.create_category(t[1])
-            division_categories[t[1]] = category
-        print(t[0], division_categories[t[1]])
-        await interaction.guild.create_voice_channel(t[0], category=division_categories[t[1]], overwrites=overwrites)
-    await interaction.followup.send(f'Finished creating {len(teams)} voice channels.')
-
-
-
 @tree.command(
     name='empty_category',
     description='removes all channels in category', 
@@ -397,12 +272,6 @@ async def clear_text_channels(interaction: discord.Interaction, this_category: d
 async def clear_categoryless(interaction: discord.Interaction):
     await util.clear_categoryless(interaction)
 
-#debug command to check order roles are being checked in
-@tree.command(
-    name='print_roles',
-    description='prints all roles', 
-    guild=discord.Object(id=server_id))
-async def print_roles(interaction: discord.Interaction):
-    await util.print_roles(interaction)
-        
+"""
+    
 client.run(token)
