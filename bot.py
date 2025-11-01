@@ -88,7 +88,6 @@ def load_old_objects() -> dict:
         old_objects: dict = {}
         return old_objects
 
-# TODO make admin only
 @tree.command(
         name='create_new_objects', 
         description='Creates a new role, text channel, and voice channel for each team in the given season.', 
@@ -169,6 +168,66 @@ def get_role_permissions(guild: discord.Guild, role: discord.Role) -> dict:
 
 def get_team_logo_link(team: str, size: int) -> str:
     return f'https://cdn.kesomannen.com/cdn-cgi/image/format=png,fit=scale-down,width={size}/dunderligan/logos/{team}.png'
+
+@tree.command(
+        name='output_standing', 
+        description='Outputs standing for division', 
+        guild=discord.Object(id=server_id))
+async def output_standing(interaction: discord.Interaction, division: int) -> None:
+    await interaction.response.defer()
+    cursor.execute(f"""
+                    SELECT 
+                        d.name AS "division_name",
+                        m.team_a_score,
+                        m.team_b_score,
+                        ra.name AS "roster_a_name",
+                        rb.name AS "roster_b_name"
+                    FROM division d
+                        JOIN "group" g ON g.division_id = d.id
+                        JOIN "match" m ON m.group_id = g.id
+                        JOIN "roster" ra ON m.roster_a_id = ra.id
+                        JOIN "roster" rb ON m.roster_b_id = rb.id
+                        JOIN "season" s ON d.season_id = s.id
+                    WHERE s.slug = 'test'
+                        AND d.name = 'Division {division}'
+                   """)
+    matches = cursor.fetchall()
+
+    scores: dict[str: int] = {}
+    for match in matches:
+        first_team = match[3]
+        second_team = match[4]
+        first_points = match[1]
+        second_points = match[2]
+
+        scores[first_team] = scores[first_team] + first_points if scores.get(first_team) else first_points
+        scores[second_team] = scores[second_team] + second_points if scores.get(second_team) else second_points
+    
+    sorted_scores = {}
+    for team in sorted(scores, key = scores.get, reverse = True):
+        sorted_scores[team] = scores[team]
+
+    standings = []
+    for team, score in sorted_scores.items():
+        standings.append((team, f"{score}/{9-score}/0", f"{score}p"))
+    # "standings": [(namn, x/x/x, xp)]
+
+    current_time = str(datetime.datetime.now().strftime("%Y-%m-%d, %H:%M"))
+    season = "7"
+    document_data = {
+        "standings": standings, 
+        "division": division, 
+        "season": season
+        }
+    sys_inputs = {"document_data": json.dumps(document_data), "time": json.dumps(current_time)}
+
+    TYPST_FILE = f"standings.typ"
+    OUTPUT_FILE = f"standing-div-{division}.png" 
+    typst.compile(input = TYPST_FILE, output = OUTPUT_FILE, format = "png", sys_inputs = sys_inputs, ppi = 144.0)
+    with open(OUTPUT_FILE, 'rb') as image:
+        await interaction.channel.send(file = discord.File(image))
+
+    await interaction.followup.send("Sent standings!")
 
 ########## OLD CODE vvv
 """
