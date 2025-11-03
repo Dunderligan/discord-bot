@@ -181,3 +181,4 @@ cython_debug/
 .cursorindexingignore
 /bot-env
 old_objects.json
+/generated_images
