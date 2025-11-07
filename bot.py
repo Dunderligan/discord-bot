@@ -383,9 +383,10 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
     roles = {"tank": 0, "damage": 1, "support": 2}
     for team_name, players in teams.items():
         team_players = sorted(players, key = lambda p: roles[p[2]])
-        team_message = f"{team_name}\n"
+        team_message = f"**{team_name}**\n"
         for p in team_players:
-            team_message += f"{p[0]}, {p[1]}, {p[2]}, {p[3]}, {p[4]}\n"
+            rank_emote = discord.utils.get(interaction.guild.emojis, name=p[0])
+            team_message += f"- {rank_emote} {p[0].capitalize()} {p[1]}, {p[2].capitalize()} - {p[3]} {"**C**" if p[4] else ""}\n"
         await interaction.channel.send(team_message)
     await interaction.followup.send("Completed.")
 

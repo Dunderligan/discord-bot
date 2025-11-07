@@ -1,6 +1,8 @@
+#let ratio =  1  * 16/9
+#let height = 540pt
 #set page(
-  height: 500pt,
-  width: 500pt,
+  height: height,
+  width: height * ratio,
   margin: 24pt
 )
 #set text(
@@ -14,8 +16,8 @@
 
 #show table.cell.where(y: 0): set text(weight: "bold")
 
-//#let document_data = ("standings": (("placeholder-team.jpg", "Omedvetna Pappertussarna", "9/0/0", "9p"), ("team_thumbnails/d1c84e6b-caa5-4ee1-bc83-0cb1eeac1365.png", "Cool Sharks", "9/0/0", "9p"), ("placeholder-team.jpg", "Oklippta Gamers", "6/3/0", "6p"), ("team_thumbnails/f5b97a04-de2a-4d7d-94ba-952c8ec61701.png", "Flexibla Björnarna", "6/3/0", "6p"), ("placeholder-team.jpg", "Läskiga Hajarna", "3/6/0", "3p"), ("team_thumbnails/eeb86332-2d0a-4668-9c5c-97f5edc4ce5e.png", "Mogna Pojkarna", "3/6/0", "3p"), ("placeholder-team.jpg", "Rika Gamers", "0/9/0", "0p"), ("placeholder-team.jpg", "Starka Pappertussarna", "0/9/0", "0p")), "division": 1, "season": "7")
-#let document_data = json(bytes(sys.inputs.document_data))
+#let document_data = ("standings": (("placeholder-team.jpg", "Omedvetna Pappertussarna", "9/0/0", "9p"), ("team_thumbnails/d1c84e6b-caa5-4ee1-bc83-0cb1eeac1365.png", "Cool Sharks", "9/0/0", "9p"), ("placeholder-team.jpg", "Oklippta Gamers", "6/3/0", "6p"), ("team_thumbnails/f5b97a04-de2a-4d7d-94ba-952c8ec61701.png", "Flexibla Björnarna", "6/3/0", "6p"), ("placeholder-team.jpg", "Läskiga Hajarna", "3/6/0", "3p"), ("team_thumbnails/eeb86332-2d0a-4668-9c5c-97f5edc4ce5e.png", "Mogna Pojkarna", "3/6/0", "3p"), ("placeholder-team.jpg", "Rika Gamers", "0/9/0", "0p"), ("placeholder-team.jpg", "Starka Pappertussarna", "0/9/0", "0p")), "division": 1, "season": "7")
+//#let document_data = json(bytes(sys.inputs.document_data))
 #grid(
   columns: (1fr, auto),
   align: (left + horizon, right+horizon),
@@ -42,6 +44,6 @@
 )
 #v(1fr)
 
-//#let current_time = "2025-11-03, 18.04"
-#let current_time = json(bytes(sys.inputs.time))
+#let current_time = "2025-11-03, 18.04"
+//#let current_time = json(bytes(sys.inputs.time))
 \@Dunderligan - Uppdaterad #current_time
