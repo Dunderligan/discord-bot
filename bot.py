@@ -363,7 +363,6 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
                         JOIN "season" s ON s.id = d.season_id
                     WHERE s.slug = 'test'
                         AND d.name = 'Division {division}'
-                    LIMIT 20
                     """)
     players = cursor.fetchall()
     
@@ -380,26 +379,17 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
             teams[team_name] = []
         teams[team_name].append((rank, tier, role, battletag, is_captain))
     
-    roles = {"tank": 0, "damage": 1, "support": 2}
+    roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4}
     for team_name, players in teams.items():
         team_players = sorted(players, key = lambda p: roles[p[2]])
         team_message = f"**{team_name}**\n"
         for p in team_players:
             rank_emote = discord.utils.get(interaction.guild.emojis, name=p[0])
+            if p[2] == "coach":
+                team_message += "\n"
             team_message += f"- {rank_emote} {p[0].capitalize()} {p[1]}, {p[2].capitalize()} - {p[3]} {"**C**" if p[4] else ""}\n"
         await interaction.channel.send(team_message)
     await interaction.followup.send("Completed.")
-
-    """
-    Get data for all teams in given division, for given season.
-
-    For team in teams:
-        generate a string on the form:
-            teamname
-            for player in team:
-                emote (rank, tier), role - battletag\n 
-        send string
-    """
 
 ########## OLD CODE vvv
 """

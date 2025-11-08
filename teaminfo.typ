@@ -3,7 +3,7 @@
 #set page(
   height: height,
   width: height * ratio,
-  margin: 32pt
+  margin: (3%),
 )
 #set text(
   font: "Rajdhani",
@@ -11,8 +11,8 @@
   fill: rgb("#1f2937")
 )
 
-#show heading.where(level: 1): set text(size: 50pt, font: "Inter 28pt", weight: "semibold")
-#show heading.where(level: 2): set text(size: 30pt, font: "Inter 28pt", weight: "semibold", style: "italic")
+#show heading.where(level: 1): set text(size: 40pt, font: "Inter 28pt", weight: "semibold")
+#show heading.where(level: 2): set text(size: 25pt, font: "Inter 28pt", weight: "semibold", style: "italic")
 
 #show table.cell.where(y: 0): set text(weight: "bold")
 
@@ -25,7 +25,7 @@
     h(10pt),
     grid.cell(
       rowspan: 2,
-      image("logo.png", width: 100pt),
+      image("logo.png", width: 80pt),
     ),
     image("dl_logo.png", height: 50pt),
     [= COOL SHARKS]
@@ -47,6 +47,7 @@
     (image(team_logo, height: image_size, width: image_size), team, result, points)
   }
 )*/
+#let player_ex = ("Coach", "Grandmaster", "5", "StarkeAdrian#123231", "")
 #let players = table(
   columns: (auto, auto, auto, auto, auto),
   stroke: none,
@@ -57,21 +58,29 @@
   table.header(
     [Roll], [Rank], [], [Battletag], []
   ),
-  ..for (role, rank, tier, battletag, captain) in (("dps", "diamond", "1", "StarkeAdrian#12323", ""), ("dps", "diamond", "1", "StarkeAdrian#12323", "Captain"),("dps", "diamond", "1", "StarkeAdrian#12323", ""),("dps", "diamond", "1", "StarkeAdrian#12323", ""),("dps", "diamond", "1", "StarkeAdrian#12323", ""),("dps", "diamond", "1", "StarkeAdrian#12323", ""),("dps", "diamond", "1", "StarkeAdrian#12323", ""),)
+  //..for (role, rank, tier, battletag, captain) in range(4)
+  ..for i in range(8)
   {
-    (role, rank, tier, battletag, captain)
+    let (role, rank, tier, battletag, captain) = player_ex
+    let c = if (calc.rem(i, 5) == 0) {"C"} else {""}
+    (role, rank, tier, battletag, [*#c*])
   }
 )
 
 #grid(
   columns: (1fr, auto),
   align: (left, right),
+  column-gutter: 128pt,
   players,
+  box(
+    fill: rgb("#e5e7eb"),
+    inset: 16pt,
+    radius: 8pt,
   grid(
     columns: (auto),
     row-gutter: 16pt,
     inset: 12pt,
-    [== Tidigare matcher],
+    [== Senaste matcher],
     grid.cell(
       fill: rgb("#a2e787"),
       [3-0 vs. Tjocka Apgänget]
@@ -84,6 +93,7 @@
       fill: rgb("#cf6666"),
       [0-3 vs. Ragge och hans coola lag]
     ),
+  )
   )
 )
 #v(1fr)
