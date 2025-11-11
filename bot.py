@@ -18,6 +18,8 @@ class CLEARABLE_OBJECT(str, enum.Enum):
     Roles = "ROLES"
     All = "ALL"
 
+# TODO clean up code
+# TODO standardize file paths
 
 CLEAR_FROM_PATH: str = "old_objects.json"  # contains the id to text-, voice channels, and roles, divided in a dictionary
 
@@ -220,7 +222,7 @@ def get_team_logo_link(team: str, size: int) -> str:
 async def check_updates():
     check_for_updates: bool = True
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(5)
 
     guild: discord.Guild = None
     channel: discord.TextChannel = None
@@ -342,7 +344,6 @@ async def output_standing(channel: discord.TextChannel, division_name: str) -> N
         standings.append((logo, team, f"{wins}/{losses}/{draws}", f"{wins}p"))
     sorted_teams = None
 
-    print(standings)
     # adds further data for typst
     current_time = str(datetime.datetime.now().strftime("%Y-%m-%d, %H:%M"))
     season = "7"
@@ -360,7 +361,7 @@ async def output_standing(channel: discord.TextChannel, division_name: str) -> N
     if not os.path.isdir(image_directory):
         os.mkdir(image_directory)
     OUTPUT_FILE = (
-        f"{image_directory}/standing-div-{division_name.replace(' ', '_')}.png"
+        f"{image_directory}/standing-div-{format_name(division_name)}.png"
     )
 
     TYPST_FILE = f"standings.typ"
@@ -377,6 +378,7 @@ async def output_standing(channel: discord.TextChannel, division_name: str) -> N
 
 
 def get_roster(season: int, division: int, team: str = ""):
+    # TODO helper-function to retrieve teams from a division
     pass
 
 
@@ -393,6 +395,7 @@ def clear_thumbnail_cache() -> None:
 )
 async def print_rosters(interaction: discord.Interaction, division: int) -> None:
     await interaction.response.defer()
+    print("Requesting rosters...")
     cursor.execute(f"""
                     SELECT 
                         p.battletag,
@@ -412,6 +415,7 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
                     """)
     players = cursor.fetchall()
 
+    print("Sorts teams...")
     teams: dict[str:list] = {}
     for p in players:
         battletag = p[0]
@@ -425,6 +429,7 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
             teams[team_name] = []
         teams[team_name].append((rank, tier, role, battletag, is_captain))
 
+    print("Generates messages...")
     roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4}
     for team_name, players in teams.items():
         team_players = sorted(players, key=lambda p: roles[p[2]])
@@ -436,8 +441,11 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
                 team_message += "\n"
             team_message += f"- {role_emote} {p[2].capitalize()} - {rank_emote} {p[0].capitalize()} {p[1]} - {p[3]} {'**C**' if p[4] else ''}\n"
         await interaction.channel.send(team_message)
+
+    print("Finished.")
     await interaction.followup.send("Completed.")
 
+# TODO generate team-info image
 
 ########## OLD CODE vvv
 """
