@@ -59,13 +59,37 @@
     [Roll], [Rank], [], [Battletag], []
   ),
   //..for (role, rank, tier, battletag, captain) in range(4)
-  ..for i in range(8)
+  ..for i in range(10)
   {
     let (role, rank, tier, battletag, captain) = player_ex
     let c = if (calc.rem(i, 5) == 0) {"C"} else {""}
     (role, rank, tier, battletag, [*#c*])
   }
 )
+
+/*#let players = grid(
+  columns: 1, 
+  grid(
+    columns: (auto, auto, auto, auto, auto),
+    ..("Role", "Rank", "", "Battletag", "")
+  ),
+  for i in range(10)
+  {
+    let (role, rank, tier, battletag, captain) = player_ex
+    let c = if (calc.rem(i, 5) == 0) {"C"} else {""}
+    box(
+      radius: 6pt,
+      fill: rgb("#e5e7eb"),
+      inset: ("x": 0pt, "y": 8pt),
+    grid(
+    columns: (auto, auto, auto, 1fr),
+    align: left + horizon,
+    inset: ("x": 8pt, "y": 0pt),
+    ..(role, rank + " " + tier, battletag, c)
+    )
+    )
+  }
+)*/
 
 #grid(
   columns: (1fr, auto),
@@ -75,31 +99,28 @@
   box(
     fill: rgb("#e5e7eb"),
     inset: 16pt,
-    radius: 8pt,
-  grid(
-    columns: (auto),
-    row-gutter: 16pt,
-    inset: 12pt,
-    [== Senaste matcher],
-    grid.cell(
-      fill: rgb("#a2e787"),
-      [3-0 vs. Tjocka Apgänget]
-    ),
-    grid.cell(
-      fill: rgb("#cf6666"),
-      [1-2 vs. Ocustik]
-    ),
-    grid.cell(
-      fill: rgb("#cf6666"),
-      [0-3 vs. Ragge och hans coola lag]
-    ),
+    grid(
+      columns: (auto),
+      row-gutter: 16pt,
+      inset: 12pt,
+      [== Senaste matcher],
+      grid.cell(
+        fill: rgb("#a2e787"),
+        [3-0 vs. Tjocka Apgänget]
+      ),
+      grid.cell(
+        fill: rgb("#cf6666"),
+        [1-2 vs. Ocustik]
+      ),
+      grid.cell(
+        fill: rgb("#cf6666"),
+        [0-3 vs. Ragge och hans coola lag]
+      ),
   )
   )
 )
 #v(1fr)
 
-#let current_time = "2025-11-03, 18.04"
-//#let current_time = json(bytes(sys.inputs.time))
 #grid(
   columns: (auto, auto, auto),
   [\@Dunderligan],

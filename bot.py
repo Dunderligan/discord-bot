@@ -334,6 +334,10 @@ async def output_standing(interaction: discord.Interaction, division: int) -> No
     await interaction.followup.send("Sent standings!")
 
 
+def get_roster(season: int, division: int, team: str = ""):
+     pass
+
+
 def clear_thumbnail_cache() -> None:
     directory = "team_thumbnails"
     for thumbnail in os.listdir(directory):
