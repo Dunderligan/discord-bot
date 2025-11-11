@@ -1,0 +1,5 @@
+discord 
+dotenv 
+psycopg2-binary 
+typst 
+requests
