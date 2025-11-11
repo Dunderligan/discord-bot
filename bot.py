@@ -7,6 +7,7 @@ import requests
 import datetime
 import typst
 import enum
+import asyncio
 from dotenv import load_dotenv
 from discord import app_commands
 
@@ -22,8 +23,9 @@ CLEAR_FROM_PATH: str = "old_objects.json"  # contains the id to text-, voice cha
 
 load_dotenv()
 token = os.getenv("TOKEN")
-server_id = os.getenv("SERVER_ID")
+server_id: int = int(os.getenv("SERVER_ID"))
 postgres_link = os.getenv("POSTGRES_LINK")
+PERSISTENT_FOLDER: str = os.getenv("PERSISTENT_FOLDER")
 
 db_conn = psycopg2.connect(postgres_link)
 cursor = db_conn.cursor()
@@ -97,8 +99,8 @@ async def remove_old_objects(
 
 
 def load_old_objects() -> dict:
-    if os.path.isfile(CLEAR_FROM_PATH):
-        with open(CLEAR_FROM_PATH, "r") as file:
+    if os.path.isfile(PERSISTENT_FOLDER + CLEAR_FROM_PATH):
+        with open(PERSISTENT_FOLDER + CLEAR_FROM_PATH, "r") as file:
             old_objects: dict = json.load(file)
             return old_objects
     else:
@@ -159,7 +161,7 @@ async def create_new_objects(interaction: discord.Interaction, season: str) -> N
 
 
 def save_new_objects(objects: dict) -> None:
-    with open(CLEAR_FROM_PATH, "w") as file:
+    with open(PERSISTENT_FOLDER + CLEAR_FROM_PATH, "w") as file:
         json.dump(objects, file)
 
 
@@ -215,8 +217,50 @@ def get_team_logo_link(team: str, size: int) -> str:
     return f"https://cdn.kesomannen.com/cdn-cgi/image/format=png,fit=scale-down,width={size}/dunderligan/logos/{team}.png"
 
 
+async def check_updates():
+    check_for_updates: bool = True
+
+    await asyncio.sleep(10)
+
+    guild: discord.Guild = None
+    channel: discord.TextChannel = None
+
+    while check_for_updates:
+        if not guild:
+            guild = discord.utils.find(lambda s: s.id == server_id, client.guilds)
+        if guild and not channel:
+            channel = discord.utils.find(
+                lambda c: c.name == "tabell", guild.text_channels
+            )
+        if guild and channel:
+            cursor.execute("""
+                        SELECT 
+                            d.name AS "division_name"
+                        FROM division d
+                            JOIN "season" s ON d.season_id = s.id
+                        WHERE s.slug = 'test'
+                        ORDER BY d.name
+                        """)
+            divisions = cursor.fetchall()
+
+            for d in divisions:
+                await output_standing(channel, d[0])
+
+        time_now: datetime.datetime = datetime.datetime.now()
+        next_hour: datetime.datetime = (time_now + datetime.timedelta(hours=1)).replace(
+            minute=0, second=0
+        )
+        second_delay: int = (next_hour - time_now).total_seconds()
+
+        await asyncio.sleep(second_delay)
+
+
 def get_team_thumbnail(team: str) -> str:
-    image_path = f"team_thumbnails/{format_name(team)}.png"
+    image_folder = f"{PERSISTENT_FOLDER}team_thumbnails/"
+    image_path = f"{image_folder}{format_name(team)}.png"
+
+    if not os.path.isdir(image_folder):
+        os.mkdir(image_folder)
     if not os.path.isfile(image_path):
         image_formats = ("image/png", "image/jpeg", "image/jpg")
         r = requests.get(get_team_logo_link(team, 64))
@@ -229,13 +273,7 @@ def get_team_thumbnail(team: str) -> str:
     return image_path
 
 
-@tree.command(
-    name="output_standing",
-    description="Outputs standing for division",
-    guild=discord.Object(id=server_id),
-)
-async def output_standing(interaction: discord.Interaction, division: int) -> None:
-    await interaction.response.defer()
+async def output_standing(channel: discord.TextChannel, division_name: str) -> None:
     cursor.execute(f"""
                     SELECT 
                         d.name AS "division_name",
@@ -253,7 +291,7 @@ async def output_standing(interaction: discord.Interaction, division: int) -> No
                         JOIN "roster" rb ON m.roster_b_id = rb.id
                         JOIN "season" s ON d.season_id = s.id
                     WHERE s.slug = 'test'
-                        AND d.name = 'Division {division}'
+                        AND d.name = '{division_name}'
                    """)
     matches = cursor.fetchall()
 
@@ -308,7 +346,11 @@ async def output_standing(interaction: discord.Interaction, division: int) -> No
     # adds further data for typst
     current_time = str(datetime.datetime.now().strftime("%Y-%m-%d, %H:%M"))
     season = "7"
-    document_data = {"standings": standings, "division": division, "season": season}
+    document_data = {
+        "standings": standings,
+        "division": division_name,
+        "season": season,
+    }
     sys_inputs = {
         "document_data": json.dumps(document_data),
         "time": json.dumps(current_time),
@@ -317,7 +359,9 @@ async def output_standing(interaction: discord.Interaction, division: int) -> No
     image_directory = "generated_images"
     if not os.path.isdir(image_directory):
         os.mkdir(image_directory)
-    OUTPUT_FILE = f"{image_directory}/standing-div-{division}.png"
+    OUTPUT_FILE = (
+        f"{image_directory}/standing-div-{division_name.replace(' ', '_')}.png"
+    )
 
     TYPST_FILE = f"standings.typ"
     typst.compile(
@@ -329,13 +373,11 @@ async def output_standing(interaction: discord.Interaction, division: int) -> No
         font_paths=["fonts"],
     )
     with open(OUTPUT_FILE, "rb") as image:
-        await interaction.channel.send(file=discord.File(image))
-
-    await interaction.followup.send("Sent standings!")
+        await channel.send(file=discord.File(image))
 
 
 def get_roster(season: int, division: int, team: str = ""):
-     pass
+    pass
 
 
 def clear_thumbnail_cache() -> None:
@@ -369,8 +411,8 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
                         AND d.name = 'Division {division}'
                     """)
     players = cursor.fetchall()
-    
-    teams: dict[str: list] = {}
+
+    teams: dict[str:list] = {}
     for p in players:
         battletag = p[0]
         rank = p[1]
@@ -382,19 +424,20 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
         if not teams.get(team_name):
             teams[team_name] = []
         teams[team_name].append((rank, tier, role, battletag, is_captain))
-    
+
     roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4}
     for team_name, players in teams.items():
-        team_players = sorted(players, key = lambda p: roles[p[2]])
-        team_message = f"**{team_name}**\n"
+        team_players = sorted(players, key=lambda p: roles[p[2]])
+        team_message = f"## **{team_name}**\n"
         for p in team_players:
             rank_emote = discord.utils.get(interaction.guild.emojis, name=p[0])
-            role_emote = discord.utils.get(interaction.guild.emojis, name = p[2])
+            role_emote = discord.utils.get(interaction.guild.emojis, name=p[2])
             if p[2] == "coach":
                 team_message += "\n"
-            team_message += f"- {role_emote} {p[2].capitalize()} - {rank_emote} {p[0].capitalize()} {p[1]} - {p[3]} {"**C**" if p[4] else ""}\n"
+            team_message += f"- {role_emote} {p[2].capitalize()} - {rank_emote} {p[0].capitalize()} {p[1]} - {p[3]} {'**C**' if p[4] else ''}\n"
         await interaction.channel.send(team_message)
     await interaction.followup.send("Completed.")
+
 
 ########## OLD CODE vvv
 """
@@ -425,4 +468,12 @@ async def clear_categoryless(interaction: discord.Interaction):
 
 """
 
-client.run(token)
+
+async def main():
+    """Runs client that checks for user-commands and server-side updates in parallell"""
+    await asyncio.gather(check_updates(), client.start(token))
+
+
+asyncio.run(main())
+# asyncio.run(check_updates())
+# client.run(token)
