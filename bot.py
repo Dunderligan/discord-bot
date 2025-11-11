@@ -2,6 +2,7 @@
 import discord
 import os
 import json
+# TODO switch to https://pypi.org/project/asyncpg/
 import psycopg2
 import requests
 import datetime
@@ -39,6 +40,14 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+
+def run_query(sql: str):
+    # TODO research if effective AND needed
+    with psycopg2.connect(postgres_link) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            return cur.fetchall()
 
 
 @client.event
@@ -168,7 +177,7 @@ def save_new_objects(objects: dict) -> None:
 
 
 def get_teams(season: str) -> dict:
-    cursor.execute(f"""SELECT 
+    teams = run_query(f"""SELECT 
                     r.name, 
                     d.name as division_name, 
                     r.id, 
@@ -179,7 +188,6 @@ def get_teams(season: str) -> dict:
                     WHERE season_slug = '{season}'
                     ORDER BY division_name, r.name
                     LIMIT 8""")
-    teams = cursor.fetchall()
     return teams
 
 
@@ -235,7 +243,7 @@ async def check_updates():
                 lambda c: c.name == "tabell", guild.text_channels
             )
         if guild and channel:
-            cursor.execute("""
+            divisions = run_query("""
                         SELECT 
                             d.name AS "division_name"
                         FROM division d
@@ -243,7 +251,6 @@ async def check_updates():
                         WHERE s.slug = 'test'
                         ORDER BY d.name
                         """)
-            divisions = cursor.fetchall()
 
             for d in divisions:
                 await output_standing(channel, d[0])
@@ -254,7 +261,9 @@ async def check_updates():
         )
         second_delay: int = (next_hour - time_now).total_seconds()
 
-        await asyncio.sleep(second_delay)
+        # TODO research if effective
+        for _ in range(int(second_delay)):
+            await asyncio.sleep(1)
 
 
 def get_team_thumbnail(team: str) -> str:
@@ -265,6 +274,7 @@ def get_team_thumbnail(team: str) -> str:
         os.mkdir(image_folder)
     if not os.path.isfile(image_path):
         image_formats = ("image/png", "image/jpeg", "image/jpg")
+        # TODO make async?
         r = requests.get(get_team_logo_link(team, 64))
         if r.headers["content-type"] in image_formats:
             image = r.content
@@ -276,7 +286,7 @@ def get_team_thumbnail(team: str) -> str:
 
 
 async def output_standing(channel: discord.TextChannel, division_name: str) -> None:
-    cursor.execute(f"""
+    matches = run_query(f"""
                     SELECT 
                         d.name AS "division_name",
                         m.team_a_score,
@@ -295,7 +305,6 @@ async def output_standing(channel: discord.TextChannel, division_name: str) -> N
                     WHERE s.slug = 'test'
                         AND d.name = '{division_name}'
                    """)
-    matches = cursor.fetchall()
 
     # goes through all matches and adds relevant numbers to teams
     teams: dict[str:tuple] = {}
@@ -396,38 +405,42 @@ def clear_thumbnail_cache() -> None:
 async def print_rosters(interaction: discord.Interaction, division: int) -> None:
     await interaction.response.defer()
     print("Requesting rosters...")
-    cursor.execute(f"""
-                    SELECT 
-                        p.battletag,
-                        m.rank, 
-                        m.tier, 
-                        m.role,
-                        m.is_captain,
-                        r.name AS "roster_name"
-                    FROM player p
-                        JOIN "member" m ON m.player_id = p.id
-                        JOIN "roster" r ON r.id = m.roster_id
-                        JOIN "group" g ON g.id = r.group_id
-                        JOIN "division" d ON d.id = g.division_id
-                        JOIN "season" s ON s.id = d.season_id
-                    WHERE s.slug = 'test'
-                        AND d.name = 'Division {division}'
-                    """)
-    players = cursor.fetchall()
+    # TODO introduce more try-except
+    try:
+        players = run_query(f"""
+                        SELECT 
+                            p.battletag,
+                            m.rank, 
+                            m.tier, 
+                            m.role,
+                            m.is_captain,
+                            r.name AS "roster_name"
+                        FROM player p
+                            JOIN "member" m ON m.player_id = p.id
+                            JOIN "roster" r ON r.id = m.roster_id
+                            JOIN "group" g ON g.id = r.group_id
+                            JOIN "division" d ON d.id = g.division_id
+                            JOIN "season" s ON s.id = d.season_id
+                        WHERE s.slug = 'test'
+                            AND d.name = 'Division {division}'
+                        """)
 
-    print("Sorts teams...")
-    teams: dict[str:list] = {}
-    for p in players:
-        battletag = p[0]
-        rank = p[1]
-        tier = p[2]
-        role = p[3]
-        is_captain = p[4]
-        team_name = p[5]
+        print("Sorts teams...")
+        teams: dict[str:list] = {}
+        for p in players:
+            battletag = p[0]
+            rank = p[1]
+            tier = p[2]
+            role = p[3]
+            is_captain = p[4]
+            team_name = p[5]
 
-        if not teams.get(team_name):
-            teams[team_name] = []
-        teams[team_name].append((rank, tier, role, battletag, is_captain))
+            if not teams.get(team_name):
+                teams[team_name] = []
+            teams[team_name].append((rank, tier, role, battletag, is_captain))
+    except Exception as e:
+        await interaction.followup.send(f"Error: {e}")
+        raise
 
     print("Generates messages...")
     roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4}
