@@ -3,12 +3,14 @@ import discord
 import os
 import json
 # TODO switch to https://pypi.org/project/asyncpg/
-import psycopg2
 import requests
 import datetime
 import typst
 import enum
 import asyncio
+
+import dbqueries
+
 from dotenv import load_dotenv
 from discord import app_commands
 
@@ -27,12 +29,10 @@ class CLEARABLE_OBJECT(str, enum.Enum):
 load_dotenv()
 token = os.getenv("TOKEN")
 server_id: int = int(os.getenv("SERVER_ID"))
+postgres_link = os.getenv("POSTGRES_LINK")
 PERSISTENT_FOLDER: str = os.getenv("PERSISTENT_FOLDER")
 
 CLEAR_FROM_PATH: str = f"{PERSISTENT_FOLDER}old_objects.json"  # contains the id to text-, voice channels, and roles, divided in a dictionary
-
-db_conn = psycopg2.connect(postgres_link)
-cursor = db_conn.cursor()
 
 admin_role_id: int = int(os.getenv("ADMIN_ID"))
 text_category: discord.CategoryChannel
@@ -41,14 +41,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
-
-
-def run_query(sql: str):
-    # TODO research if effective AND needed
-    with psycopg2.connect(postgres_link) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            return cur.fetchall()
 
 
 @client.event
@@ -133,7 +125,7 @@ async def create_new_objects(interaction: discord.Interaction, season: str) -> N
         lambda category: category.id == int(os.getenv("TEXT_CATEGORY")),
         interaction.guild.categories,
     )
-    teams = get_teams(season)
+    teams = await dbqueries.get_teams(season)
     new_objects = {"text": [], "voice": [], "roles": []}
 
     for t in teams:
@@ -177,21 +169,6 @@ def save_new_objects(objects: dict) -> None:
         json.dump(objects, file)
 
 
-def get_teams(season: str) -> dict:
-    teams = run_query(f"""SELECT 
-                    r.name, 
-                    d.name as division_name, 
-                    r.id, 
-                    r.slug 
-                    FROM roster r 
-                        JOIN "group" g ON g.id = r.group_id
-                        JOIN division d ON d.id = g.division_id
-                    WHERE season_slug = '{season}'
-                    ORDER BY division_name, r.name
-                    LIMIT 8""")
-    return teams
-
-
 def format_name(name: str) -> str:
     allowed_characters = "abcdefghijklmnopqrstuvwxyz0123456789-"
     formatted_name = ""
@@ -229,7 +206,7 @@ def get_team_logo_link(team: str, size: int) -> str:
 
 
 async def check_updates():
-    check_for_updates: bool = False
+    check_for_updates: bool = True
 
     await asyncio.sleep(5)
 
@@ -244,17 +221,10 @@ async def check_updates():
                 lambda c: c.name == "tabell", guild.text_channels
             )
         if guild and channel:
-            divisions = run_query("""
-                        SELECT 
-                            d.name AS "division_name"
-                        FROM division d
-                            JOIN "season" s ON d.season_id = s.id
-                        WHERE s.slug = 'test'
-                        ORDER BY d.name
-                        """)
+            divisions = await dbqueries.get_divisions('test')
 
             for d in divisions:
-                await output_standing(channel, d[0])
+                await output_standing(channel, d)
 
         time_now: datetime.datetime = datetime.datetime.now()
         next_hour: datetime.datetime = (time_now + datetime.timedelta(hours=1)).replace(
@@ -287,36 +257,17 @@ def get_team_thumbnail(team: str) -> str:
 
 
 async def output_standing(channel: discord.TextChannel, division_name: str) -> None:
-    matches = run_query(f"""
-                    SELECT 
-                        d.name AS "division_name",
-                        m.team_a_score,
-                        m.team_b_score,
-                        ra.name AS "roster_a_name",
-                        rb.name AS "roster_b_name",
-                        ra.id AS "roster_a_id",
-                        rb.id AS "roster_b_id",
-                        m.draws AS "draw"
-                    FROM division d
-                        JOIN "group" g ON g.division_id = d.id
-                        JOIN "match" m ON m.group_id = g.id
-                        JOIN "roster" ra ON m.roster_a_id = ra.id
-                        JOIN "roster" rb ON m.roster_b_id = rb.id
-                        JOIN "season" s ON d.season_id = s.id
-                    WHERE s.slug = 'test'
-                        AND d.name = '{division_name}'
-                   """)
-
     # goes through all matches and adds relevant numbers to teams
+    matches: list = await dbqueries.get_matches('test', division_name)
     teams: dict[str:tuple] = {}
     for match in matches:
-        points_1 = match[1]
-        points_2 = match[2]
-        team_1 = match[3]
-        team_2 = match[4]
-        id_1 = match[5]
-        id_2 = match[6]
-        draws = match[7]
+        points_1 = match[0]
+        points_2 = match[1]
+        team_1 = match[2]
+        team_2 = match[3]
+        id_1 = match[4]
+        id_2 = match[5]
+        draws = match[6]
 
         total_points = points_1 + points_2
 
@@ -387,11 +338,6 @@ async def output_standing(channel: discord.TextChannel, division_name: str) -> N
         await channel.send(file=discord.File(image))
 
 
-def get_roster(season: int, division: int, team: str = ""):
-    # TODO helper-function to retrieve teams from a division
-    pass
-
-
 def clear_thumbnail_cache() -> None:
     directory = "team_thumbnails"
     for thumbnail in os.listdir(directory):
@@ -406,42 +352,7 @@ def clear_thumbnail_cache() -> None:
 async def print_rosters(interaction: discord.Interaction, division: int) -> None:
     await interaction.response.defer()
     print("Requesting rosters...")
-    # TODO introduce more try-except
-    try:
-        players = run_query(f"""
-                        SELECT 
-                            p.battletag,
-                            m.rank, 
-                            m.tier, 
-                            m.role,
-                            m.is_captain,
-                            r.name AS "roster_name"
-                        FROM player p
-                            JOIN "member" m ON m.player_id = p.id
-                            JOIN "roster" r ON r.id = m.roster_id
-                            JOIN "group" g ON g.id = r.group_id
-                            JOIN "division" d ON d.id = g.division_id
-                            JOIN "season" s ON s.id = d.season_id
-                        WHERE s.slug = 'test'
-                            AND d.name = 'Division {division}'
-                        """)
-
-        print("Sorts teams...")
-        teams: dict[str:list] = {}
-        for p in players:
-            battletag = p[0]
-            rank = p[1]
-            tier = p[2]
-            role = p[3]
-            is_captain = p[4]
-            team_name = p[5]
-
-            if not teams.get(team_name):
-                teams[team_name] = []
-            teams[team_name].append((rank, tier, role, battletag, is_captain))
-    except Exception as e:
-        await interaction.followup.send(f"Error: {e}")
-        raise
+    teams = await dbqueries.get_rosters('test', f"Division {division}")
 
     print("Generates messages...")
     roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4}
@@ -449,11 +360,17 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
         team_players = sorted(players, key=lambda p: roles[p[2]])
         team_message = f"## **{team_name}**\n"
         for p in team_players:
-            rank_emote = discord.utils.get(interaction.guild.emojis, name=p[0])
-            role_emote = discord.utils.get(interaction.guild.emojis, name=p[2])
-            if p[2] == "coach":
+            rank = p[0]
+            tier = p[1]
+            role = p[2]
+            battletag = p[3]
+            is_captain = p[4]
+
+            rank_emote = discord.utils.get(interaction.guild.emojis, name=rank)
+            role_emote = discord.utils.get(interaction.guild.emojis, name=role)
+            if role == "coach":
                 team_message += "\n"
-            team_message += f"{rank_emote} {role_emote} *{p[0].capitalize()} {p[1]}, {p[2].capitalize()}* - {f'__{p[3]}__ **C**' if p[4] else f'{p[3]}'}\n"
+            team_message += f"{rank_emote} {role_emote} *{rank.capitalize()} {tier}, {role.capitalize()}* - {f'__{battletag}__ **C**' if is_captain else f'{battletag}'}\n"
         await interaction.channel.send(team_message)
 
     print("Finished.")
@@ -493,6 +410,7 @@ async def clear_categoryless(interaction: discord.Interaction):
 
 async def main():
     """Runs client that checks for user-commands and server-side updates in parallell"""
+    await dbqueries.connect_db(postgres_link)
     await asyncio.gather(check_updates(), client.start(token))
 
 
