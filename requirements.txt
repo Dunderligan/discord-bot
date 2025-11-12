@@ -1,5 +1,5 @@
 discord 
 dotenv 
-psycopg2-binary 
+asyncpg 
 typst 
 requests

@@ -12,6 +12,7 @@ import asyncio
 from dotenv import load_dotenv
 from discord import app_commands
 
+# TODO egen pugs-funktionalitet?
 
 class CLEARABLE_OBJECT(str, enum.Enum):
     VoiceChannels = "VOICE"
@@ -22,13 +23,13 @@ class CLEARABLE_OBJECT(str, enum.Enum):
 # TODO clean up code
 # TODO standardize file paths
 
-CLEAR_FROM_PATH: str = "old_objects.json"  # contains the id to text-, voice channels, and roles, divided in a dictionary
 
 load_dotenv()
 token = os.getenv("TOKEN")
 server_id: int = int(os.getenv("SERVER_ID"))
-postgres_link = os.getenv("POSTGRES_LINK")
 PERSISTENT_FOLDER: str = os.getenv("PERSISTENT_FOLDER")
+
+CLEAR_FROM_PATH: str = f"{PERSISTENT_FOLDER}old_objects.json"  # contains the id to text-, voice channels, and roles, divided in a dictionary
 
 db_conn = psycopg2.connect(postgres_link)
 cursor = db_conn.cursor()
@@ -110,8 +111,8 @@ async def remove_old_objects(
 
 
 def load_old_objects() -> dict:
-    if os.path.isfile(PERSISTENT_FOLDER + CLEAR_FROM_PATH):
-        with open(PERSISTENT_FOLDER + CLEAR_FROM_PATH, "r") as file:
+    if os.path.isfile(CLEAR_FROM_PATH):
+        with open(CLEAR_FROM_PATH, "r") as file:
             old_objects: dict = json.load(file)
             return old_objects
     else:
@@ -172,7 +173,7 @@ async def create_new_objects(interaction: discord.Interaction, season: str) -> N
 
 
 def save_new_objects(objects: dict) -> None:
-    with open(PERSISTENT_FOLDER + CLEAR_FROM_PATH, "w") as file:
+    with open(CLEAR_FROM_PATH, "w") as file:
         json.dump(objects, file)
 
 
@@ -200,7 +201,7 @@ def format_name(name: str) -> str:
             formatted_name += char
         elif char in "åäáà":
             formatted_name += "a"
-        elif char == "öõ":
+        elif char in "öõ":
             formatted_name += "o"
         elif char == "'" or formatted_name[-1] == "-":
             continue
@@ -228,7 +229,7 @@ def get_team_logo_link(team: str, size: int) -> str:
 
 
 async def check_updates():
-    check_for_updates: bool = True
+    check_for_updates: bool = False
 
     await asyncio.sleep(5)
 
@@ -281,7 +282,7 @@ def get_team_thumbnail(team: str) -> str:
             with open(image_path, "wb") as file:
                 file.write(image)
         else:
-            return "placeholder-team.jpg"
+            return "placeholder-team.png"
     return image_path
 
 
@@ -452,7 +453,7 @@ async def print_rosters(interaction: discord.Interaction, division: int) -> None
             role_emote = discord.utils.get(interaction.guild.emojis, name=p[2])
             if p[2] == "coach":
                 team_message += "\n"
-            team_message += f"- {role_emote} {p[2].capitalize()} - {rank_emote} {p[0].capitalize()} {p[1]} - {p[3]} {'**C**' if p[4] else ''}\n"
+            team_message += f"{rank_emote} {role_emote} *{p[0].capitalize()} {p[1]}, {p[2].capitalize()}* - {f'__{p[3]}__ **C**' if p[4] else f'{p[3]}'}\n"
         await interaction.channel.send(team_message)
 
     print("Finished.")
