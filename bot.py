@@ -8,7 +8,6 @@ import datetime
 import typst
 import enum
 import asyncio
-
 import dbqueries
 
 from dotenv import load_dotenv
@@ -41,6 +40,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+db_connection: dbqueries.AsyncConnection = None
 
 
 @client.event
@@ -125,7 +126,7 @@ async def create_new_objects(interaction: discord.Interaction, season: str) -> N
         lambda category: category.id == int(os.getenv("TEXT_CATEGORY")),
         interaction.guild.categories,
     )
-    teams = await dbqueries.get_teams(season)
+    teams = await dbqueries.get_teams(db_connection, season)
     new_objects = {"text": [], "voice": [], "roles": []}
 
     for t in teams:
@@ -221,7 +222,7 @@ async def check_updates():
                 lambda c: c.name == "tabell", guild.text_channels
             )
         if guild and channel:
-            divisions = await dbqueries.get_divisions('test')
+            divisions = await dbqueries.get_divisions(db_connection, 'test')
 
             for d in divisions:
                 await output_standing(channel, d)
@@ -258,7 +259,7 @@ def get_team_thumbnail(team: str) -> str:
 
 async def output_standing(channel: discord.TextChannel, division_name: str) -> None:
     # goes through all matches and adds relevant numbers to teams
-    matches: list = await dbqueries.get_matches('test', division_name)
+    matches: list = await dbqueries.get_matches(db_connection, 'test', division_name)
     teams: dict[str:tuple] = {}
     for match in matches:
         points_1 = match[0]
@@ -352,7 +353,7 @@ def clear_thumbnail_cache() -> None:
 async def print_rosters(interaction: discord.Interaction, division: int) -> None:
     await interaction.response.defer()
     print("Requesting rosters...")
-    teams = await dbqueries.get_rosters('test', f"Division {division}")
+    teams = await dbqueries.get_rosters(db_connection, 'test', f"Division {division}")
 
     print("Generates messages...")
     roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4}
@@ -410,7 +411,10 @@ async def clear_categoryless(interaction: discord.Interaction):
 
 async def main():
     """Runs client that checks for user-commands and server-side updates in parallell"""
-    await dbqueries.connect_db(postgres_link)
+    global db_connection
+    db_connection = dbqueries.AsyncConnection()
+    await db_connection.connect_to_db(postgres_link)
+
     await asyncio.gather(check_updates(), client.start(token))
 
 

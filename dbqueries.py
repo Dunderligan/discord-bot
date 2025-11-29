@@ -1,37 +1,35 @@
-import asyncpg
-
-# v not needed
 import asyncio
+import asyncpg
 
 """
 Purpose of module:
 Establish connection to database, and let other scripts retrieve SQL-queries.
-Host standard functions to recieve particular data, such as matches, rosters, and divisions."""
-
-conn: asyncpg.Connection = None
+Offer standard functions to recieve particular data, such as matches, rosters, and divisions."""
 
 
-async def connect_db(postgres_link: str) -> None:
-    global conn
-    conn = await asyncpg.connect(postgres_link)
+
+class AsyncConnection:
+    conn: asyncpg.Connection = None
+
+    async def connect_to_db(self, postgres_link: str) -> None:
+        self.conn = await asyncpg.connect(postgres_link)
+
+    async def get_query(self, sql: str) -> list:
+        """
+        Tries to get and return values from database according to SQL-query.
+        """
+        try:
+            if not self.conn:
+                raise Exception("Has not connected to database...")
+            values = await self.conn.fetch(sql, timeout=30)
+            if not values:
+                raise Exception(f"Found no values with query: \n{sql}")
+            return values
+        except Exception as e:
+            print(f"Failed to get query, got error: {e}")
 
 
-async def get_query(sql: str) -> list:
-    """
-    Tries to get and return values from database according to SQL-query.
-    """
-    try:
-        if not conn:
-            raise Exception("Has not connected to database...")
-        values = await conn.fetch(sql, timeout=30)
-        if not values:
-            raise Exception(f"Found no values with query: \n{sql}")
-        return values
-    except Exception as e:
-        print(f"Failed to get query, got error: {e}")
-
-
-async def get_rosters(season: str, division: str, team: str = None) -> list:
+async def get_rosters(conn: AsyncConnection, season: str, division: str, team: str = None) -> list:
     """
     Gets all players (tag, rank, role, and if captain) of a division,
     sorts them after team, and returns. Has option to filter
@@ -56,12 +54,12 @@ async def get_rosters(season: str, division: str, team: str = None) -> list:
     if team:
         sql += f" AND r.name = '{team}'"
 
-    values = await get_query(sql)
+    values = await conn.get_query(sql)
     values = sort_players_into_teams(values)
     return values
 
 
-async def get_divisions(season: str) -> list:
+async def get_divisions(conn: AsyncConnection, season: str) -> list:
     """
     Gets all division names for given season.
     """
@@ -74,12 +72,12 @@ async def get_divisions(season: str) -> list:
         ORDER BY d.name
         """
 
-    values = await get_query(sql)
+    values = await conn.get_query(sql)
     values = [division["division_name"] for division in values]
     return values
 
 
-async def get_matches(season: str, division: str) -> list:
+async def get_matches(conn: AsyncConnection, season: str, division: str) -> list:
     """
     Gets all matches played in given division, during given season.
     """
@@ -102,7 +100,7 @@ async def get_matches(season: str, division: str) -> list:
                 AND d.name = '{division}'
                 """
 
-    values = await get_query(sql)
+    values = await conn.get_query(sql)
     values = [
         (
             m["team_a_score"],
