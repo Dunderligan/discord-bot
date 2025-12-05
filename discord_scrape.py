@@ -81,7 +81,7 @@ async def scrape_teams(
             if not teams.get("divisions").get(division):
                 teams["divisions"][division] = DIVISION.copy()
 
-            async for message in channel.history(limit=1):
+            async for message in channel.history(limit=4):
                 content = message.content
                 roster = [row for row in content.split("\n")]
 
@@ -114,10 +114,10 @@ async def scrape_teams(
                             player_copy = player_copy[1:]
 
                         elif STEPS[current_step] == "RANK":
-                            if len(player) >= 5:
-                                rank = get_rank(player[0:2])
+                            if len(player_copy) >= 5:
+                                rank = get_rank(player_copy[0:2])
                             else:
-                                rank = get_rank(player[0:1])
+                                rank = get_rank(player_copy[0:1])
 
                             if rank[0]:
                                 member["sr"] = rank[1][0]
@@ -129,63 +129,30 @@ async def scrape_teams(
                             current_step += 1
 
                         elif STEPS[current_step] == "ROLE":
-                            member["role"] = player[0].lower().replace("dps", "damage")
+                            member["role"] = player_copy[0].lower().replace("dps", "damage")
                             player_copy = player_copy[1:]
                             current_step += 1
 
                         elif STEPS[current_step] == "BATTLETAG":
-                            member["battletag"] = player[0]
+                            member["battletag"] = player_copy[0]
                             player_copy = player_copy[1:]
                             current_step += 1
 
                         elif STEPS[current_step] == "CAPTAIN":
-                            if player:
-                                if "c" in player[0].lower():
+                            if player_copy:
+                                if "c" in player_copy[0].lower():
                                     member["is_captain"] = True
                             break
                     
                     teams["divisions"][division][team_name]["players"].append(member)
 
-            await interaction.channel.send(f"rosters: {teams}")
-
-            """
-                    if player[2].lower() in RANKS:
-                        member["battletag"] = player[6]
-                        member["rank"] = player[2].lower()
-                        member["tier"] = int(player[3])
-                        member["role"] = player[4].lower().replace("dps", "damage")
-                        if len(player) >= 8:
-                            member["is_captain"] = "c" in player[7].lower()
-                        else:
-                            member["is_captain"] = False
-                    else:
-                        member["battletag"] = player[3]
-                        member["sr"] = int(float(player[1].replace("k", "").strip(" .,-")) * 1000)
-                        member["role"] = player[2].lower().replace("dps", "damage")
-                        if len(player) >= 5:
-                            member["is_captain"] = "c" in player[4].lower()
-                        else:
-                            member["is_captain"] = False
-
-                    await interaction.channel.send(f"member: {member}")
-                    """
+            print(teams)
+            with open("output.json", "w") as file:
+                json.dump(teams, file)
 
             await interaction.channel.send(
                 f"Got rosters from season {season}, division {division}"
             )
-
-            """
-            **Chef's Kiss**  *AVG: <:silver:631440339051479040> Silver 3*
-            - <:bronze:631440315164917760> Bronze 5, Tank - RANDOM501st#2386 **C** ✅ 
-            - <:plat:631440410874740746> Platinum 4, Tank - ŜŊǕŜMǕMȐƗƘƐŊ ✅ 
-            - <:bronze:631440315164917760> Bronze 4, DPS - Zamzamzoot ✅ 
-            - <:silver:631440339051479040> Silver 1, DPS - Getsaken ✅ 
-            - <:silver:631440339051479040> Silver 3, Support - Vasterasgurkan ✅ 
-            - <:silver:631440339051479040> Silver 2, Support - Finsklax#2472 **C** ✅ 
-
-            - 🧠 Coach - Starkeadrian
-            - 🧠 Coach - Koloma
-            """
 
 
 def get_rank(parts: list) -> tuple[bool, list]:
