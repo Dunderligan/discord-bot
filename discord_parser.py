@@ -23,13 +23,13 @@ async def on_ready():
 
 
 @tree.command(
-    name="scrape_teams",
-    description="Reads through roster messages and saves teams.",
+    name="parse_teams",
+    description="Reads through roster messages and parses teams into a json-file.",
     guild=discord.Object(id=server_id),
 )
 @app_commands.checks.has_role(admin_role_id)
 @app_commands.describe(category="Category to check")
-async def scrape_teams(
+async def parse_teams(
     interaction: discord.Interaction, category: discord.CategoryChannel
 ) -> str:
     """teams: dict = {
@@ -166,12 +166,13 @@ async def scrape_teams(
 
                     teams["divisions"][division][team_name]["players"].append(member)
 
-            with open(f"parsed_data/season_{season}.json", "w") as file:
-                json.dump(teams, file)
+    with open(f"parsed_data/season_{season}.json", "w") as file:
+        json.dump(teams, file)
 
-            await interaction.channel.send(
-                f"Got rosters from season {season}, division {division}"
-            )
+    await interaction.channel.send(
+        f"Got rosters from season {season}:",
+        file=discord.File(f"parsed_data/season_{season}.json")
+    )
 
 
 def get_rank(parts: list) -> tuple[bool, list]:
