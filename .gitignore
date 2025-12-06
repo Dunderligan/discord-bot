@@ -180,5 +180,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 /bot-env
+
+# Local data for bot
 old_objects.json
 /generated_images
+/parsed_data

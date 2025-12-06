@@ -84,25 +84,28 @@ async def scrape_teams(
             if not teams.get("divisions").get(division):
                 teams["divisions"][division] = copy.deepcopy(DIVISION)
 
-            async for message in channel.history(limit=4):
+            async for message in channel.history(limit=16):
                 content = message.content
                 roster = [row for row in content.split("\n")]
 
                 if roster[0].startswith("-"):
-                    team_name = "UNKNOWN"  # todo ASK FOR INPUT FROM USER
+                    print(f"SKIPPED TEAM: {roster}\nManually input team on website")
+                    continue
                 else:
-                    team_name = " ".join(
-                        [
-                            a.capitalize()
-                            for a in roster[0]
-                            .replace("*", "")
-                            .lower()
-                            .split("avg")[0]
-                            .strip()
-                            .split()
-                        ]
+                    team_name = strip_emojis(
+                        " ".join(
+                            [
+                                a.capitalize()
+                                for a in roster[0]
+                                .replace("*", "")
+                                .lower()
+                                .split("avg")[0]
+                                .strip()
+                                .split()
+                            ]
+                        )
                     )
-                    
+
                     if "division" in team_name.lower():
                         team_name = team_name[
                             : team_name.lower().index("division") - 2
@@ -114,7 +117,10 @@ async def scrape_teams(
 
                 for roster_player in roster:
                     player = list(
-                        filter(lambda p: p != "-" and p != ",", strip_emojis(roster_player).split())
+                        filter(
+                            lambda p: p != "-" and p != ",",
+                            strip_emojis(roster_player).split(),
+                        )
                     )
                     member = copy.deepcopy(PLAYER)
                     current_step = 0
@@ -122,10 +128,8 @@ async def scrape_teams(
                     while True:
                         if not player:
                             break
-                        print(player)
 
                         if not is_valid(player[0]):
-                            print("invalid start")
                             player = player[1:]
 
                         elif STEPS[current_step] == "RANK":
@@ -150,7 +154,7 @@ async def scrape_teams(
                             current_step += 1
 
                         elif STEPS[current_step] == "BATTLETAG":
-                            member["battletag"] = player[0]
+                            member["battletag"] = strip_punc(player[0])
                             player = player[1:]
                             current_step += 1
 
@@ -162,9 +166,8 @@ async def scrape_teams(
 
                     teams["divisions"][division][team_name]["players"].append(member)
 
-            with open("output.json", "w") as file:
+            with open(f"parsed_data/season_{season}.json", "w") as file:
                 json.dump(teams, file)
-            # await interaction.channel.send(f"rosters: {teams}")
 
             await interaction.channel.send(
                 f"Got rosters from season {season}, division {division}"
@@ -173,10 +176,9 @@ async def scrape_teams(
 
 def get_rank(parts: list) -> tuple[bool, list]:
     """
-    Takes a list of 1 or 2 indices.
-    Extracts (rank, tier) or (sr) and returns a tuple
-    with a bool for if it is legacy rank (sr) or not,
-    and a list with either 1 or 2 parts of a rank.
+    Takes a list and tries to find a rank in either format
+    sr "X.Xk" or with tier "Rank X", returns rank and a bool
+    set to whether it uses sr or not.
     """
     RANKS: list = [
         "bronze",
@@ -193,7 +195,7 @@ def get_rank(parts: list) -> tuple[bool, list]:
     rank = strip_punc(str(parts[0]).lower())
     if "." in rank or "k" in rank:
         try:
-            sr = int(float(rank.strip("k ,-").replace(",", ".")) * 1000)
+            sr = int(float(rank.strip("k ,-?").replace(",", ".")) * 1000)
         except ValueError:
             sr = None
         return (True, [sr])
@@ -211,22 +213,34 @@ def get_rank(parts: list) -> tuple[bool, list]:
 
 
 def strip_punc(text: str) -> str:
+    """
+    Strips punctuation from text.
+    """
     return text.strip(" ,.-()")
 
 
 def strip_emojis(text: str) -> str:
+    """
+    Strips emojis on format ":name:" from front
+    and end of string.
+    """
     mod_text = text
     if text.startswith(":"):
-        mod_text = mod_text[mod_text.index(":", 1)+1:]
+        mod_text = mod_text[mod_text.index(":", 1) + 1 :].lstrip()
     if text.endswith(":"):
-        mod_text = mod_text[:mod_text.index(":")]
-    print(f"Removed emojis. Old: {text}, New: {mod_text}")
+        mod_text = mod_text[: mod_text.index(":")].rstrip()
     return mod_text
 
 
 def is_valid(text: str) -> bool:
-    return (len(text) > 1 or text in "12345") and not (
-        text.startswith(":") and text.endswith(":")
+    """
+    Returns whether text contains valid information, or
+    is just wrongly placed punctuation.
+    """
+    return (
+        (len(text) > 1 or text in "12345")
+        and not (text.startswith(":") and text.endswith(":"))
+        and text != "N/A"
     )
 
 
