@@ -1,6 +1,7 @@
 import discord
 import os
 import json
+import copy
 from dotenv import load_dotenv
 from discord import app_commands
 
@@ -59,15 +60,17 @@ async def scrape_teams(
     TEAM: dict = {"players": []}
     PLAYER: dict = {
         "battletag": "",
-        "rank": "",
-        "tier": -1,
-        "sr": -1,
+        "rank": None,
+        "tier": None,
+        "sr": None,
         "role": "",
         "is_captain": False,
     }
 
+    ROLES: list = ["tank", "damage", "support", "flex", "coach"]
+
     STEPS: list = ["RANK", "ROLE", "BATTLETAG", "CAPTAIN"]
-    teams: dict = SEASON.copy()
+    teams: dict = copy.deepcopy(SEASON)
 
     for channel in category.text_channels:
         if "spelartrupper" in channel.name:
@@ -79,76 +82,89 @@ async def scrape_teams(
 
             division: int = int(channel_info[2])
             if not teams.get("divisions").get(division):
-                teams["divisions"][division] = DIVISION.copy()
+                teams["divisions"][division] = copy.deepcopy(DIVISION)
 
             async for message in channel.history(limit=4):
                 content = message.content
                 roster = [row for row in content.split("\n")]
 
-                team_name = " ".join(
-                    [
-                        a.capitalize()
-                        for a in roster[0]
-                        .replace("*", "")
-                        .split("AVG")[0]
-                        .rstrip()
-                        .split()
-                    ]
-                )
-                if "division" in team_name.lower():
-                    team_name = team_name[
-                        : team_name.lower().index("division") - 2
-                    ].rstrip()
-                if not teams.get("divisions").get(division).get(team_name):
-                    teams["divisions"][division][team_name] = TEAM.copy()
-
-                for player in roster[1:]:
-                    player_copy = list(
-                        filter(lambda p: p != "-" and p != ",", player.split())
+                if roster[0].startswith("-"):
+                    team_name = "UNKNOWN"  # todo ASK FOR INPUT FROM USER
+                else:
+                    team_name = " ".join(
+                        [
+                            a.capitalize()
+                            for a in roster[0]
+                            .replace("*", "")
+                            .lower()
+                            .split("avg")[0]
+                            .strip()
+                            .split()
+                        ]
                     )
-                    member = PLAYER.copy()
+                    
+                    if "division" in team_name.lower():
+                        team_name = team_name[
+                            : team_name.lower().index("division") - 2
+                        ].rstrip()
+                    roster = roster[1:]
+
+                if not teams.get("divisions").get(division).get(team_name):
+                    teams["divisions"][division][team_name] = copy.deepcopy(TEAM)
+
+                for roster_player in roster:
+                    player = list(
+                        filter(lambda p: p != "-" and p != ",", strip_emojis(roster_player).split())
+                    )
+                    member = copy.deepcopy(PLAYER)
                     current_step = 0
 
-                    while player_copy:
-                        if not is_valid(player_copy[0]):
-                            player_copy = player_copy[1:]
+                    while True:
+                        if not player:
+                            break
+                        print(player)
+
+                        if not is_valid(player[0]):
+                            print("invalid start")
+                            player = player[1:]
 
                         elif STEPS[current_step] == "RANK":
-                            if len(player_copy) >= 5:
-                                rank = get_rank(player_copy[0:2])
-                            else:
-                                rank = get_rank(player_copy[0:1])
+                            rank = get_rank(player)
 
                             if rank[0]:
                                 member["sr"] = rank[1][0]
-                                player_copy = player_copy[1:]
                             else:
-                                member["rank"] = rank[1][0]
-                                member["tier"] = rank[1][1]
-                                player_copy = player_copy[2:]
+                                if len(rank[1]) == 2:
+                                    member["rank"] = rank[1][0]
+                                    member["tier"] = rank[1][1]
+                            player = player[len(rank[1]) :]
                             current_step += 1
 
                         elif STEPS[current_step] == "ROLE":
-                            member["role"] = player_copy[0].lower().replace("dps", "damage")
-                            player_copy = player_copy[1:]
+                            role = player[0].lower().replace("dps", "damage")
+                            if role in ROLES:
+                                member["role"] = role
+                            else:
+                                member["role"] = "flex"
+                            player = player[1:]
                             current_step += 1
 
                         elif STEPS[current_step] == "BATTLETAG":
-                            member["battletag"] = player_copy[0]
-                            player_copy = player_copy[1:]
+                            member["battletag"] = player[0]
+                            player = player[1:]
                             current_step += 1
 
                         elif STEPS[current_step] == "CAPTAIN":
-                            if player_copy:
-                                if "c" in player_copy[0].lower():
+                            if player:
+                                if "c" in player[0].lower():
                                     member["is_captain"] = True
                             break
-                    
+
                     teams["divisions"][division][team_name]["players"].append(member)
 
-            print(teams)
             with open("output.json", "w") as file:
                 json.dump(teams, file)
+            # await interaction.channel.send(f"rosters: {teams}")
 
             await interaction.channel.send(
                 f"Got rosters from season {season}, division {division}"
@@ -174,34 +190,44 @@ def get_rank(parts: list) -> tuple[bool, list]:
     ]
     RANK_ALIASES: dict = {"guld": "gold", "gm": "grandmaster", "brons": "bronze"}
 
-    if len(parts) == 1:
+    rank = strip_punc(str(parts[0]).lower())
+    if "." in rank or "k" in rank:
         try:
-            sr = int(float(str(parts[0]).strip("k .,-").replace(",", ".")) * 1000)
+            sr = int(float(rank.strip("k ,-").replace(",", ".")) * 1000)
         except ValueError:
-            sr = 0
+            sr = None
         return (True, [sr])
-    elif len(parts) == 2:
+    elif rank in RANKS or rank in RANK_ALIASES:
+        if rank not in RANKS:
+            rank = RANK_ALIASES
         try:
-            rank = str(parts[0]).lower()
-            if rank not in RANKS:
-                if rank in RANK_ALIASES:
-                    rank = RANK_ALIASES[rank]
-                else:
-                    raise ValueError
             tier = int(strip_punc(parts[1]))
         except ValueError:
             rank = None
             tier = None
         return (False, [rank, tier])
-    return (False, [None, None])
+    else:
+        return (False, [None])
 
 
 def strip_punc(text: str) -> str:
     return text.strip(" ,.-()")
 
 
+def strip_emojis(text: str) -> str:
+    mod_text = text
+    if text.startswith(":"):
+        mod_text = mod_text[mod_text.index(":", 1)+1:]
+    if text.endswith(":"):
+        mod_text = mod_text[:mod_text.index(":")]
+    print(f"Removed emojis. Old: {text}, New: {mod_text}")
+    return mod_text
+
+
 def is_valid(text: str) -> bool:
-    return (len(text) > 1 or text not in ":(),.-") and not (text.startswith(":") and text.endswith(":"))
+    return (len(text) > 1 or text in "12345") and not (
+        text.startswith(":") and text.endswith(":")
+    )
 
 
 client.run(token)
