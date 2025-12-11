@@ -76,7 +76,9 @@ async def parse_teams(
         if "spelartrupper" in channel.name:
             channel_info = channel.name.split("-")
 
-            season: int = int(channel_info[3][1])
+            season: int = int(channel_info[-1][1])
+
+            
             if teams.get("season") == 0:
                 teams["season"] = season
 
@@ -167,7 +169,75 @@ async def parse_teams(
                     teams["divisions"][division][team_name]["players"].append(member)
 
     with open(f"parsed_data/season_{season}.json", "w") as file:
-        json.dump(teams, file)
+        json.dump(teams, file, indent=1)
+
+    await interaction.channel.send(
+        f"Got rosters from season {season}:",
+        file=discord.File(f"parsed_data/season_{season}.json")
+    )
+
+
+@tree.command(
+    name="parse_groups",
+    description="Reads through schedule to find groups and matches, outputting into a json-file.",
+    guild=discord.Object(id=server_id),
+)
+@app_commands.checks.has_role(admin_role_id)
+@app_commands.describe(category="Category to check")
+async def parse_groups(
+    interaction: discord.Interaction, category: discord.CategoryChannel
+) -> str:
+    """
+    "season": 0,
+    "start_date": ?,
+    "divisions": {
+        "1": {
+            "groups": {
+                "A": {
+                    "teams": [],
+                    "matches": [
+                        {
+                        "date": None
+                        "team1": "Missarna",
+                        "team2": "Kaninerna",
+                        "score1": 3,
+                        "score2": 0,
+                        "draws": 0
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    """
+
+    # GROUP NAMES GO FROM A -> B -> C -> ...
+    # MULTIPLE MESSAGES IN A CHANNEL MEANS ONE GROUP PER MESSAGE
+    # SPLIT ON "OMGÅNG", CAN GET DATE FROM THERE
+
+    await interaction.response.send_message("Parsing groups...")
+
+    SEASON: dict = {"season": 0, "start_date": None, "divisions": {}}
+    DIVISION: dict = {"groups": {}}
+    GROUP: dict = {"teams": [], "matches": []}
+    MATCH: dict = {"data": None, "teamA": "", "teamB": "", "scoreA": 0, "scoreB": 0, "draws": 0}
+
+    teams: dict = copy.deepcopy(SEASON)
+
+    for channel in category.text_channels:
+        if "spelartrupper" in channel.name:
+            channel_info = channel.name.split("-")
+
+            season: int = int(channel_info[-1][1])
+
+            
+            if teams.get("season") == 0:
+                teams["season"] = season
+
+            division: int = int(channel_info[2])
+
+    with open(f"parsed_data/season_{season}.json", "w") as file:
+        json.dump(teams, file, indent=1)
 
     await interaction.channel.send(
         f"Got rosters from season {season}:",
