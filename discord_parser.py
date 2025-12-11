@@ -222,22 +222,52 @@ async def parse_groups(
     GROUP: dict = {"teams": [], "matches": []}
     MATCH: dict = {"data": None, "teamA": "", "teamB": "", "scoreA": 0, "scoreB": 0, "draws": 0}
 
-    teams: dict = copy.deepcopy(SEASON)
+    groups: dict = copy.deepcopy(SEASON)
 
     for channel in category.text_channels:
-        if "spelartrupper" in channel.name:
+        if "spelschema" in channel.name:
             channel_info = channel.name.split("-")
 
             season: int = int(channel_info[-1][1])
+            division: int = int(channel_info[1][3])
+            
+            if groups.get("season") == 0:
+                groups["season"] = season
+
+            if not groups.get("divisions").get(division):
+                groups["divisions"][division] = copy.deepcopy(DIVISION)
+
+            async for message in channel.history(limit=4):
+                if groups.get("start_date") == None:
+                    groups["start_date"] = message.created_at
+
+                
+                content = message.content
+                roster = [row for row in content.split("\n")]
+
+                if roster[0].startswith("-"):
+                    print(f"SKIPPED TEAM: {roster}\nManually input team on website")
+                    continue
+                else:
+                    team_name = strip_emojis(
+                        " ".join(
+                            [
+                                a.capitalize()
+                                for a in roster[0]
+                                .replace("*", "")
+                                .lower()
+                                .split("avg")[0]
+                                .strip()
+                                .split()
+                            ]
+                        )
+                    )
 
             
-            if teams.get("season") == 0:
-                teams["season"] = season
 
-            division: int = int(channel_info[2])
 
     with open(f"parsed_data/season_{season}.json", "w") as file:
-        json.dump(teams, file, indent=1)
+        json.dump(groups, file, indent=1)
 
     await interaction.channel.send(
         f"Got rosters from season {season}:",
