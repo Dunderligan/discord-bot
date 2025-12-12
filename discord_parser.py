@@ -1,6 +1,7 @@
 import discord
 import os
 import json
+import datetime
 import copy
 from dotenv import load_dotenv
 from discord import app_commands
@@ -78,11 +79,10 @@ async def parse_teams(
 
             season: int = int(channel_info[-1][1])
 
-            
             if teams.get("season") == 0:
                 teams["season"] = season
 
-            division: int = int(channel_info[2])
+            division = "Division " + channel_info[2]
             if not teams.get("divisions").get(division):
                 teams["divisions"][division] = copy.deepcopy(DIVISION)
 
@@ -173,7 +173,7 @@ async def parse_teams(
 
     await interaction.channel.send(
         f"Got rosters from season {season}:",
-        file=discord.File(f"parsed_data/season_{season}.json")
+        file=discord.File(f"parsed_data/season_{season}.json"),
     )
 
 
@@ -193,15 +193,15 @@ async def parse_groups(
     "divisions": {
         "1": {
             "groups": {
-                "A": {
+                "Grupp A": {
                     "teams": [],
                     "matches": [
                         {
                         "date": None
-                        "team1": "Missarna",
-                        "team2": "Kaninerna",
-                        "score1": 3,
-                        "score2": 0,
+                        "rosterA": "Missarna",
+                        "rosterB": "Kaninerna",
+                        "teamAScore": 3,
+                        "teamBScore": 0,
                         "draws": 0
                         }
                     ]
@@ -220,58 +220,92 @@ async def parse_groups(
     SEASON: dict = {"season": 0, "start_date": None, "divisions": {}}
     DIVISION: dict = {"groups": {}}
     GROUP: dict = {"teams": [], "matches": []}
-    MATCH: dict = {"data": None, "teamA": "", "teamB": "", "scoreA": 0, "scoreB": 0, "draws": 0}
+    MATCH: dict = {
+        "date": None,
+        "rosterA": "",
+        "rosterB": "",
+        "teamAScore": 0,
+        "teamBScore": 0,
+        "draws": 0,
+    }
 
     groups: dict = copy.deepcopy(SEASON)
-
+    start_date = None
     for channel in category.text_channels:
         if "spelschema" in channel.name:
             channel_info = channel.name.split("-")
 
             season: int = int(channel_info[-1][1])
-            division: int = int(channel_info[1][3])
-            
+            division: str = ("Division " + channel_info[1][3])
+
             if groups.get("season") == 0:
                 groups["season"] = season
 
             if not groups.get("divisions").get(division):
                 groups["divisions"][division] = copy.deepcopy(DIVISION)
 
-            async for message in channel.history(limit=4):
-                if groups.get("start_date") == None:
-                    groups["start_date"] = message.created_at
-
-                
-                content = message.content
-                roster = [row for row in content.split("\n")]
-
-                if roster[0].startswith("-"):
-                    print(f"SKIPPED TEAM: {roster}\nManually input team on website")
-                    continue
-                else:
-                    team_name = strip_emojis(
-                        " ".join(
-                            [
-                                a.capitalize()
-                                for a in roster[0]
-                                .replace("*", "")
-                                .lower()
-                                .split("avg")[0]
-                                .strip()
-                                .split()
-                            ]
-                        )
-                    )
-
             
+            async for message in channel.history(limit=4):
+                if groups.get("start_date") is None:
+                    start_date = message.created_at.replace(hour=20, minute=0, second=0, microsecond=0)
+                    groups["start_date"] = start_date.isoformat()
 
+                content = message.content
+                rows = [row for row in content.split("\n")]
 
-    with open(f"parsed_data/season_{season}.json", "w") as file:
+                group = copy.deepcopy(GROUP)
+
+                rounds = []
+                current_round = 0
+                for row in rows:
+                    line = strip_punc(row)
+                    if line.lower().startswith("omgång"):
+                        rounds.append([])
+                        current_round += 1
+
+                    elif line != "" and not line.lower().startswith("senast"):
+                        line = line.split("vs.")
+
+                        rosterA: str = strip_punc(line[0])
+                        rosterB: str = strip_punc(line[1])
+                        teamAScore: int = 0
+                        teamBScore: int = 0
+                        draws: int = 0
+
+                        if "..." in line[1]:
+                            rest = line[1].split("...")
+                            rosterB = strip_punc(rest[0])
+
+                            score = list(map(strip_punc, rest[1].split("-")))
+                            teamAScore = int(score[0][0])
+                            teamBScore = int(score[1][0])
+                            draws = 3 - (teamAScore + teamBScore)
+
+                        if rosterA not in group["teams"]:
+                            group["teams"].append(rosterA)
+                        if rosterB not in group["teams"]:
+                            group["teams"].append(rosterB)
+
+                        match = copy.deepcopy(MATCH)
+
+                        if start_date:
+                            match["date"] = (start_date + datetime.timedelta(days=7*(current_round - 1))).isoformat()
+                        match["rosterA"] = rosterA
+                        match["rosterB"] = rosterB
+                        match["teamAScore"] = teamAScore
+                        match["teamBScore"] = teamBScore
+                        match["draws"] = draws
+
+                        group["matches"].append(match)
+
+                groups["divisions"][division]["groups"]["Grupp A"] = group
+
+    with open(f"parsed_data/season_{season}_groups.json", "w") as file:
         json.dump(groups, file, indent=1)
 
     await interaction.channel.send(
-        f"Got rosters from season {season}:",
-        file=discord.File(f"parsed_data/season_{season}.json")
+        f"Got groups from season {season}:",
+        file=discord.File(f"parsed_data/season_{season}_groups.json"),
     )
 
 
@@ -317,7 +351,7 @@ def strip_punc(text: str) -> str:
     """
     Strips punctuation from text.
     """
-    return text.strip(" ,.-()")
+    return text.strip(" ,.-()*")
 
 
 def strip_emojis(text: str) -> str:
