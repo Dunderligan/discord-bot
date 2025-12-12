@@ -23,41 +23,47 @@ async def on_ready():
     await tree.sync(guild=discord.Object(id=server_id))
 
 
-@tree.command(
-    name="parse_teams",
-    description="Reads through roster messages and parses teams into a json-file.",
-    guild=discord.Object(id=server_id),
-)
-@app_commands.checks.has_role(admin_role_id)
-@app_commands.describe(category="Category to check")
 async def parse_teams(
-    interaction: discord.Interaction, category: discord.CategoryChannel
-) -> str:
-    """teams: dict = {
-        "season": 0,
-        "divisions": {
-            "1": {
-                "T": {
-                    "players": [
-                        {
-                            "battletag": "B",
-                            "rank": 0,
-                            "tier": 0,
-                            "sr": 0000,
-                            "role": "dps",
-                            "is_captain": False,
+    season: dict, category: discord.CategoryChannel
+) -> dict:
+    """
+    "season": 0,
+    "start_date": ?,
+    "legacy_ranks": False,
+    "divisions": {
+        "1": {
+            "groups": {
+                "Grupp A": {
+                    "teams": [
+                        "Missarna": {
+                            "players": [
+                                {
+                                "battletag": "B",
+                                "rank": 0,
+                                "tier": 0,
+                                "sr": 0000,
+                                "role": "dps",
+                                "is_captain": False,
+                                }
+                            ],
                         }
                     ],
+                    "matches": [
+                        {
+                        "date": None
+                        "rosterA": "Missarna",
+                        "rosterB": "Kaninerna",
+                        "teamAScore": 3,
+                        "teamBScore": 0,
+                        "draws": 0
+                        }
+                    ]
                 }
-            },
-            "2": {},
-        },
-    }"""
-
-    await interaction.response.send_message("Scraping teams...")
-
-    SEASON: dict = {"season": 0, "divisions": {}}
-    DIVISION: dict = {}
+            }
+        }
+    }
+    """
+    
     TEAM: dict = {"players": []}
     PLAYER: dict = {
         "battletag": "",
@@ -69,22 +75,13 @@ async def parse_teams(
     }
 
     ROLES: list = ["tank", "damage", "support", "flex", "coach"]
-
     STEPS: list = ["RANK", "ROLE", "BATTLETAG", "CAPTAIN"]
-    teams: dict = copy.deepcopy(SEASON)
+    season_with_teams = copy.deepcopy(season)
 
     for channel in category.text_channels:
         if "spelartrupper" in channel.name:
             channel_info = channel.name.split("-")
-
-            season: int = int(channel_info[-1][1])
-
-            if teams.get("season") == 0:
-                teams["season"] = season
-
-            division = "Division " + channel_info[2]
-            if not teams.get("divisions").get(division):
-                teams["divisions"][division] = copy.deepcopy(DIVISION)
+            division = "Division " + channel_info[2][0]
 
             async for message in channel.history(limit=16):
                 content = message.content
@@ -114,8 +111,26 @@ async def parse_teams(
                         ].rstrip()
                     roster = roster[1:]
 
-                if not teams.get("divisions").get(division).get(team_name):
-                    teams["divisions"][division][team_name] = copy.deepcopy(TEAM)
+                groups: dict = season_with_teams["divisions"][division]["groups"]
+                teams = []
+                done_one_pass = False
+                while True:
+                    for group_name, value in groups.items():
+                        if team_name in value["teams"]:
+                            group_name = group_name
+                            break
+                        elif not done_one_pass:
+                            teams = teams + list(value["teams"].keys())
+                    else:
+                        done_one_pass = True
+                        print(f"Couldn't find roster '{team_name}' among teams {teams}")
+                        team_name = input("Name to instead look for=")
+                        continue
+                    break
+
+                if not group_name:
+                    team = copy.deepcopy(TEAM)
+                team = groups[group_name]["teams"][team_name]
 
                 for roster_player in roster:
                     player = list(
@@ -139,6 +154,7 @@ async def parse_teams(
 
                             if rank[0]:
                                 member["sr"] = rank[1][0]
+                                season_with_teams["legacy_ranks"] = True
                             else:
                                 if len(rank[1]) == 2:
                                     member["rank"] = rank[1][0]
@@ -166,35 +182,35 @@ async def parse_teams(
                                     member["is_captain"] = True
                             break
 
-                    teams["divisions"][division][team_name]["players"].append(member)
-
-    with open(f"parsed_data/season_{season}.json", "w") as file:
-        json.dump(teams, file, indent=1)
-
-    await interaction.channel.send(
-        f"Got rosters from season {season}:",
-        file=discord.File(f"parsed_data/season_{season}.json"),
-    )
+                    team["players"].append(member)
+    return season_with_teams
 
 
-@tree.command(
-    name="parse_groups",
-    description="Reads through schedule to find groups and matches, outputting into a json-file.",
-    guild=discord.Object(id=server_id),
-)
-@app_commands.checks.has_role(admin_role_id)
-@app_commands.describe(category="Category to check")
 async def parse_groups(
-    interaction: discord.Interaction, category: discord.CategoryChannel
-) -> str:
+    category: discord.CategoryChannel
+) -> dict:
     """
     "season": 0,
     "start_date": ?,
+    "legacy_ranks": False,
     "divisions": {
         "1": {
             "groups": {
                 "Grupp A": {
-                    "teams": [],
+                    "teams": [
+                        "Missarna": {
+                            "players": [
+                                {
+                                "battletag": "B",
+                                "rank": 0,
+                                "tier": 0,
+                                "sr": 0000,
+                                "role": "dps",
+                                "is_captain": False,
+                                }
+                            ],
+                        }
+                    ],
                     "matches": [
                         {
                         "date": None
@@ -215,11 +231,10 @@ async def parse_groups(
     # MULTIPLE MESSAGES IN A CHANNEL MEANS ONE GROUP PER MESSAGE
     # SPLIT ON "OMGÅNG", CAN GET DATE FROM THERE
 
-    await interaction.response.send_message("Parsing groups...")
-
-    SEASON: dict = {"season": 0, "start_date": None, "divisions": {}}
+    SEASON: dict = {"season": 0, "start_date": None, "legacy_ranks": False, "divisions": {}}
     DIVISION: dict = {"groups": {}}
-    GROUP: dict = {"teams": [], "matches": []}
+    GROUP: dict = {"teams": {}, "matches": []}
+    TEAM: dict = {"players": []}
     MATCH: dict = {
         "date": None,
         "rosterA": "",
@@ -229,26 +244,23 @@ async def parse_groups(
         "draws": 0,
     }
 
-    groups: dict = copy.deepcopy(SEASON)
+    season: dict = copy.deepcopy(SEASON)
     start_date = None
     for channel in category.text_channels:
         if "spelschema" in channel.name:
             channel_info = channel.name.split("-")
 
-            season: int = int(channel_info[-1][1])
+            season["season"] = int(channel_info[-1][1])
             division: str = ("Division " + channel_info[1][3])
 
-            if groups.get("season") == 0:
-                groups["season"] = season
-
-            if not groups.get("divisions").get(division):
-                groups["divisions"][division] = copy.deepcopy(DIVISION)
-
+            if not season.get("divisions").get(division):
+                season["divisions"][division] = copy.deepcopy(DIVISION)
             
+            round_number = 0
             async for message in channel.history(limit=4):
-                if groups.get("start_date") is None:
-                    start_date = message.created_at.replace(hour=20, minute=0, second=0, microsecond=0)
-                    groups["start_date"] = start_date.isoformat()
+                if season.get("start_date") is None:
+                    start_date = message.created_at.replace(hour=19, minute=0, second=0, microsecond=0)
+                    season["start_date"] = start_date.isoformat()
 
                 content = message.content
                 rows = [row for row in content.split("\n")]
@@ -259,13 +271,16 @@ async def parse_groups(
                 current_round = 0
                 for row in rows:
                     line = strip_punc(row)
-                    if line.lower().startswith("omgång"):
+                    if line.lower().startswith("omgång") or line.lower().startswith("division"):
                         rounds.append([])
                         current_round += 1
+                    elif current_round == 0:
+                        continue
 
                     elif line != "" and not line.lower().startswith("senast"):
                         line = line.split("vs.")
 
+                        print(line)
                         rosterA: str = strip_punc(line[0])
                         rosterB: str = strip_punc(line[1])
                         teamAScore: int = 0
@@ -282,9 +297,9 @@ async def parse_groups(
                             draws = 3 - (teamAScore + teamBScore)
 
                         if rosterA not in group["teams"]:
-                            group["teams"].append(rosterA)
+                            group["teams"][rosterA] = copy.deepcopy(TEAM)
                         if rosterB not in group["teams"]:
-                            group["teams"].append(rosterB)
+                            group["teams"][rosterB] = copy.deepcopy(TEAM)                            
 
                         match = copy.deepcopy(MATCH)
 
@@ -297,16 +312,29 @@ async def parse_groups(
                         match["draws"] = draws
 
                         group["matches"].append(match)
+                        print(group)
 
-                groups["divisions"][division]["groups"]["Grupp A"] = group
+                LETTERS = ["Grupp A", "Grupp B", "Grupp C", "Grupp D"]
+                season["divisions"][division]["groups"][LETTERS[round_number]] = group
+                round_number += 1
+    return season
+    
 
-    with open(f"parsed_data/season_{season}_groups.json", "w") as file:
-        json.dump(groups, file, indent=1)
+def split_on_multiple(text: str, *separators):
+    modified = text
+    for s in separators:
+        if isinstance(modified, str):
+            modified = modified.split(s)
+        else:
+            modified = list(map(lambda p: p.split(s), modified))
+            merged = []
+            for parts in modified:
+                merged = merged + parts
+            modified = merged
+    return modified
 
-    await interaction.channel.send(
-        f"Got groups from season {season}:",
-        file=discord.File(f"parsed_data/season_{season}_groups.json"),
-    )
+
+print(split_on_multiple("jag heter oscar,den bästa", ",", " "))
 
 
 def get_rank(parts: list) -> tuple[bool, list]:
@@ -377,6 +405,30 @@ def is_valid(text: str) -> bool:
         and not (text.startswith(":") and text.endswith(":"))
         and text != "N/A"
     )
+
+
+@tree.command(
+    name="parse_season",
+    description="Parses category for groups, matches, and rosters.",
+    guild=discord.Object(id=server_id),
+)
+@app_commands.checks.has_role(admin_role_id)
+@app_commands.describe(category="Category to look for 'spelartrupper' and 'spelschema' in.")
+async def parse_season(
+    interaction: discord.Interaction, category: discord.CategoryChannel
+):
+    season_data = await parse_groups(category)
+    season_data = await parse_teams(season_data, category)
+    season: int = season_data["season"]
+    
+    with open(f"parsed_data/season_{season}.json", "w") as file:
+        json.dump(season_data, file, indent=1)
+
+    await interaction.channel.send(
+        f"Got data from {season}:",
+        file=discord.File(f"parsed_data/season_{season}.json"),
+    )
+    pass
 
 
 client.run(token)
