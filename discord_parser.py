@@ -119,6 +119,12 @@ async def parse_teams(
                         if team_name in value["teams"]:
                             group_name = group_name
                             break
+                        elif team_name.lower() in list(map(lambda s: s.lower(), value["teams"].keys())):
+                            for team in value["teams"].keys():
+                                if team_name.lower() == team.lower():
+                                    team_name = team
+                                    break
+                            break
                         elif not done_one_pass:
                             teams = teams + list(value["teams"].keys())
                     else:
@@ -135,8 +141,8 @@ async def parse_teams(
                 for roster_player in roster:
                     player = list(
                         filter(
-                            lambda p: p != "-" and p != ",",
-                            strip_emojis(roster_player).split(),
+                            lambda p: p != "-" and p != "," and p != "",
+                            split_on_multiple(strip_emojis(roster_player), " ", ",", "-"),
                         )
                     )
                     member = copy.deepcopy(PLAYER)
@@ -256,7 +262,7 @@ async def parse_groups(
             if not season.get("divisions").get(division):
                 season["divisions"][division] = copy.deepcopy(DIVISION)
             
-            round_number = 0
+            message_count = 0
             async for message in channel.history(limit=4):
                 if season.get("start_date") is None:
                     start_date = message.created_at.replace(hour=19, minute=0, second=0, microsecond=0)
@@ -269,18 +275,21 @@ async def parse_groups(
 
                 rounds = []
                 current_round = 0
+                current_group = 0
                 for row in rows:
                     line = strip_punc(row)
                     if line.lower().startswith("omgång") or line.lower().startswith("division"):
                         rounds.append([])
                         current_round += 1
+                        current_group = 0
                     elif current_round == 0:
                         continue
+                    elif line.isspace() or line == "":
+                        current_group += 1
 
                     elif line != "" and not line.lower().startswith("senast"):
                         line = line.split("vs.")
 
-                        print(line)
                         rosterA: str = strip_punc(line[0])
                         rosterB: str = strip_punc(line[1])
                         teamAScore: int = 0
@@ -312,11 +321,10 @@ async def parse_groups(
                         match["draws"] = draws
 
                         group["matches"].append(match)
-                        print(group)
 
                 LETTERS = ["Grupp A", "Grupp B", "Grupp C", "Grupp D"]
-                season["divisions"][division]["groups"][LETTERS[round_number]] = group
-                round_number += 1
+                season["divisions"][division]["groups"][LETTERS[message_count]] = group
+                message_count += 1
     return season
     
 
@@ -332,9 +340,6 @@ def split_on_multiple(text: str, *separators):
                 merged = merged + parts
             modified = merged
     return modified
-
-
-print(split_on_multiple("jag heter oscar,den bästa", ",", " "))
 
 
 def get_rank(parts: list) -> tuple[bool, list]:
