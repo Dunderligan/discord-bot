@@ -33,12 +33,8 @@ async def parse_teams(season: dict, category: discord.CategoryChannel) -> dict:
         "role": "",
         "is_captain": False,
     }
-
-    ROLES: list = ["tank", "damage", "support", "flex", "coach"]
-    STEPS: list = ["RANK", "ROLE", "BATTLETAG", "CAPTAIN"]
     season_with_teams = copy.deepcopy(season)
 
-    invalid_count = 0
     for channel in category.text_channels:
         if "spelartrupper" in channel.name:
             channel_info = channel.name.split("-")
@@ -96,6 +92,7 @@ async def parse_teams(season: dict, category: discord.CategoryChannel) -> dict:
                             teams = teams + list(value["teams"].keys())
                     else:
                         done_one_pass = True
+                        print(season_with_teams)
                         print(f"Couldn't find roster '{team_name}' among teams {teams}")
                         team_name = input("Name to instead look for=")
                         continue
@@ -106,73 +103,32 @@ async def parse_teams(season: dict, category: discord.CategoryChannel) -> dict:
                 team = groups[group_name]["teams"][team_name]
 
                 for roster_player in roster:
-                    player = list(
-                        filter(
-                            lambda p: p != "-" and p != "," and p != "",
-                            map(
-                                strip_emojis,
-                                split_on_multiple(roster_player, " ", ",", "-"),
-                            ),
-                        )
-                    )
-
+                    if roster_player == "" or roster_player.isspace():
+                        continue
+                    player_tokens = get_player_tokens(roster_player)
                     member = copy.deepcopy(PLAYER)
-                    current_step = 0
 
-                    while True:
-                        if not player:
-                            break
+                    if player_tokens["rank"] is not None:
+                        rank = player_tokens["rank"]
+                        if len(rank) == 2:
+                            member["rank"] = rank[0]
+                            member["tier"] = rank[1]
+                        else:
+                            member["sr"] = rank[0]
+                            if rank[0] is not None:
+                                season_with_teams["legacy_ranks"] = True
+                            
+                    if player_tokens["role"] is not None:
+                        role = player_tokens["role"]
+                        member["role"] = role
 
-                        if not is_valid(player[0]) or (
-                            current_step >= 1 and len(player[0]) == 1
-                        ):
-                            player = player[1:]
+                    if player_tokens["battletag"] is not None:
+                        tag = player_tokens["battletag"]
+                        member["battletag"] = tag
 
-                        elif STEPS[current_step] == "RANK":
-                            rank = get_rank(player)
+                    if player_tokens["is_captain"] is not None:
+                        member["is_captain"] = True
 
-                            if rank[0]:
-                                member["sr"] = rank[1][0]
-                                if member["sr"] is not None:
-                                    season_with_teams["legacy_ranks"] = True
-                            else:
-                                if len(rank[1]) == 2:
-                                    member["rank"] = rank[1][0]
-                                    member["tier"] = rank[1][1]
-                            player = player[len(rank[1]) :]
-                            current_step += 1
-
-                        elif STEPS[current_step] == "ROLE":
-                            role = player[0].lower().replace("dps", "damage")
-                            if role in ROLES:
-                                member["role"] = role
-                            else:
-                                member["role"] = "flex"
-                            player = player[1:]
-                            current_step += 1
-
-                        elif STEPS[current_step] == "BATTLETAG":
-                            member["battletag"] = strip_punc(player[0])
-                            ROLES: list = [
-                                "dps",
-                                "damage",
-                                "support",
-                                "coach",
-                                "tank",
-                                "flex"
-                            ]
-                            if member["battletag"].lower() in ROLES:
-                                member["battletag"] = f"InvalidNumber{invalid_count}#99999999"
-                                invalid_count += 1
-
-                            player = player[1:]
-                            current_step += 1
-
-                        elif STEPS[current_step] == "CAPTAIN":
-                            if player:
-                                if "c" in player[0].lower():
-                                    member["is_captain"] = True
-                            break
                     team["players"].append(member)
     return season_with_teams
 
@@ -202,8 +158,8 @@ async def parse_groups(category: discord.CategoryChannel) -> dict:
     start_date = None
     for channel in category.text_channels:
         if "spelschema" in channel.name:
-            channel_info = channel.name.split("-")
-            season["season"] = int(channel_info[-1][1])
+            channel_info = split_on_multiple(channel.name, "-", "_")
+            season["season"] = int(category.name.split()[-1])
             div = channel_info[1]
             if div == "dl":
                 division: str = "Dunderligan"
@@ -229,25 +185,30 @@ async def parse_groups(category: discord.CategoryChannel) -> dict:
                 current_group = 0
                 ready = False
                 checked_teams = 0
+                added_teams_this_round = 0
                 multiple_groups = False
                 for row in rows:
                     line = strip_punc(row)
-                    if line.lower().startswith("omgång") or line.lower().startswith(
-                        "division"
-                    ):
+                    print(line)
+                    if line.lower().startswith("slutspel"):
+                        break
+                    elif line.lower().startswith("omgång") or line.lower().startswith(
+                        "division") or line.lower().startswith("dunderligan"):
                         rounds.append([])
                         ready = True
                         if not multiple_groups:
                             current_round += 1
                         current_group = 0
+                        added_teams_this_round = 0
                     elif current_round == 0:
                         continue
-                    elif ready and (line.isspace() or line == "") and checked_teams >= 0:
+                    elif ready and (line.isspace() or line == "") and checked_teams >= 0 and added_teams_this_round > 0:
                         current_group += 1
                         multiple_groups = True
-                    elif line != "" and not line.lower().startswith("senast"):
-                        line = split_on_multiple(line, "vs.", " - ", " – ")
-                        print(line)
+                    elif line.lower().startswith("senast") or line.lower().startswith("spelas "):
+                        continue
+                    elif line != "":
+                        line = split_on_multiple(line.replace("||", ""), "vs.", " - ", " – ")
 
                         rosterA: str = strip_punc(line[0])
                         rosterB: str = strip_punc(line[1])
@@ -256,7 +217,7 @@ async def parse_groups(category: discord.CategoryChannel) -> dict:
                         draws: int = 0
 
                         if "..." in line[1] or "…" in line[1]:
-                            rest = split_on_multiple(line[1], "...", "…")
+                            rest = split_on_multiple(line[1], "...", "…", "..")
                             rosterB = strip_punc(rest[0])
                             score = list(map(strip_punc, rest[1].split("-")))
                             teamAScore = int(score[0][0])
@@ -275,7 +236,7 @@ async def parse_groups(category: discord.CategoryChannel) -> dict:
                         match["teamBScore"] = teamBScore
                         match["draws"] = draws
 
-                        group_number = max(current_group, message_count)
+                        group_number = max(current_group, 0) #message_count)
                         if not season["divisions"][division]["groups"].get(
                             GROUP_NAMES[group_number]
                         ):
@@ -292,8 +253,138 @@ async def parse_groups(category: discord.CategoryChannel) -> dict:
                         if rosterB not in group["teams"]:
                             group["teams"][rosterB] = copy.deepcopy(TEAM)
 
+                        added_teams_this_round += 1
+
                 message_count += 1
     return season
+
+
+def get_player_tokens(line: str) -> dict:
+    """
+    Takes a line from a roster.
+    Returns a dictionary containing 'rank', 'role', 'battletag', and 'is_captain'
+    """
+    # RULES: # can only appear once, in battletag
+    # order is rank -> role -> tag -> captain
+    # rank can be on form '2.5k', '2,5k', '2000', 'Diamond 3', 'N/A', 'Unranked'
+    def is_separator(index: int) -> bool:
+        return line[index] in ": ,-"
+    
+    def index_next_separator(index: int) -> int:
+        for k in range(len(line[index:])):
+            if line[index+k] in ": ,-":
+                return index + k
+
+    RANKS = ["bronze", "silver", "gold", "platinum", "diamond", "master", "grandmaster", "champion"]
+    RANKS_SPELLING = {"brons": "bronze", "guld": "gold", "gm": "grandmaster", "masters": "master", "plat": "platinum"}
+    ROLES = ["support", "damage", "tank", "coach", "flex"]
+    ROLES_SPELLING = {"suppprt": "support", "dps": "damage", "suport": "support"}
+    tokens: dict[str, str] = {"rank": None, "role": None, "battletag": None, "is_captain": None}
+    current_token = ""
+    ignore_until = -1
+    for i in range(len(line)):
+        c = line[i]
+        print(c, current_token, i, ignore_until)
+        if i <= ignore_until:
+            continue
+        elif c == "<" and line.count(">") > 0:
+            ignore_until = line.index(">", i)
+            continue
+        elif c == ":" and line[i+1:].count(":") > 0:
+            #found emoji, ignore until end
+            ignore_until = line.index(":", i+1)
+            continue
+        elif c not in ": ,-*?~_":
+            current_token += c
+        if current_token.lower() in ["n/a", "unranked", "undranked"]:
+            if tokens.get("rank") is None:
+                tokens["rank"] = [None]
+            current_token = ""
+            ignore_until = index_next_separator(i)
+
+        if tokens.get("rank") is None:
+            if "🧠" in current_token.lower():
+                tokens["rank"] = [None]
+                current_token = ""
+            elif current_token.lower().endswith("k") and is_separator(i + 1):
+                sr = int(float(current_token[:-1]) * 1000)
+                if sr >= 10000:
+                    sr = sr // 10
+                tokens["rank"] = [sr]
+                current_token = ""
+                ignore_until = index_next_separator(i)
+            elif current_token.lower() in RANKS or current_token.lower() in RANKS_SPELLING:
+                rank = current_token.lower()
+                if rank in RANKS_SPELLING:
+                    rank = RANKS_SPELLING[rank]
+                for k in range(len(line[i+1:])):
+                    if line[k+i] in "12345?":
+                        tier = line[k+i]
+                        if tier == "?":
+                            tier = "1"
+                        tokens["rank"] = [rank, int(tier)]
+                        current_token = ""
+                        ignore_until = index_next_separator(k+i)
+                        break
+            elif len(current_token) == 4:
+                for k in current_token:
+                    if k not in "0123456789":
+                        break
+                else:
+                    tokens["rank"] = [int(current_token)]
+                    current_token = ""
+                    ignore_until = index_next_separator(i)
+        elif tokens.get("role") is None:
+            if current_token and current_token[0] in "0123456789":
+                current_token = current_token[1:]
+            if current_token.lower() in ROLES or current_token.lower() in ROLES_SPELLING:
+                role = current_token.lower()
+                if role in ROLES_SPELLING:
+                    role = ROLES_SPELLING[role]
+                tokens["role"] = role
+                current_token = ""
+                ignore_until = index_next_separator(i)
+        elif tokens.get("battletag") is None:
+            if not current_token.isspace() and not current_token == "" and (len(line) == i+1 or is_separator(i + 1)):
+                tokens["battletag"] = current_token
+                current_token = ""
+                ignore_until = index_next_separator(i)
+        elif tokens.get("is_captain") is None:
+            if current_token.lower() == "c":
+                tokens["is_captain"] = True
+                break
+
+    if tokens.get("battletag") is None:
+        print(tokens)
+        raise Exception(f"Couldn't get battletag from {line}")
+    elif tokens["battletag"] in ROLES or tokens["battletag"] in RANKS:
+        print(tokens)
+        raise Exception(f"Got invalid battletag '{tokens.get("battletag")}' from {line}")
+    elif len(tokens["rank"]) == 2 and tokens["rank"][1] > 5:
+        print(tokens)
+        raise Exception(f"Got invalid rank '{tokens["rank"]} from {line}")
+    
+    return tokens
+
+
+def test_tokens():
+    tests = ["- :champion: Champion 5, DPS - Stenis#21529 C", 
+             "- :plat: 2.6k, Flex - Androseli C", 
+             "- :guld: 2.1k, Flex - Snuggegus", 
+             "- :dia: Diamond 1, DPS - szanto#21770 C ✅", 
+             "- :gm: : 4k, Tank/Flex - AxelnByback", 
+             "- :gm: GM 5, Support - MakaronerBTW#2983 C", 
+             "-:master: Master 3, DPS - origo#21428 C ✅ ",
+             "-:dia: 3k, DPS - skk",
+             "- :plat: 2,6k, Tank - TheChadd",
+             "- N/A Unranked, Tank - Ssamv ✅", 
+             "- :guld: Gold 5-1, DPS - November ✅", 
+             "- N/A Undranked, Support - EEstraada ✅",
+             "-:dia:  - Diamond 4, Support - Bobbo356 ✅"]
+
+    for test in tests:
+        print(get_player_tokens(test))
+test_tokens()
 
 
 def split_on_multiple(text: str, *separators):
@@ -308,49 +399,6 @@ def split_on_multiple(text: str, *separators):
                 merged = merged + parts
             modified = merged
     return modified
-
-
-def get_rank(parts: list) -> tuple[bool, list]:
-    """
-    Takes a list and tries to find a rank in either format
-    sr "X.Xk" or with tier "Rank X", returns rank and a bool
-    set to whether it uses sr or not.
-    """
-    RANKS: list = [
-        "bronze",
-        "silver",
-        "gold",
-        "platinum",
-        "diamond",
-        "master",
-        "grandmaster",
-        "champion",
-    ]
-    RANK_ALIASES: dict = {"guld": "gold", "gm": "grandmaster", "brons": "bronze"}
-
-    rank = strip_punc(str(parts[0]).lower())
-    if rank.lower() == "n/a" or rank.lower() == "unranked":
-        if str(parts[1]).lower() == "n/a" or str(parts[1]).lower() == "unranked":
-            return (False, [None, None])
-        return (False, [None])
-
-    if "." in rank or "k" in rank:
-        try:
-            sr = int(float(rank.strip("k ,-?").replace(",", ".")) * 1000)
-        except ValueError:
-            sr = None
-        return (True, [sr])
-    elif rank in RANKS or rank in RANK_ALIASES:
-        if rank not in RANKS:
-            rank = RANK_ALIASES[rank]
-        try:
-            tier = int(strip_punc(parts[1]))
-        except ValueError:
-            rank = None
-            tier = None
-        return (False, [rank, tier])
-    else:
-        return (False, [None])
 
 
 def strip_punc(text: str) -> str:
@@ -371,16 +419,6 @@ def strip_emojis(text: str) -> str:
     if mod_text.endswith(":") and mod_text.count(":") >= 2:
         mod_text = mod_text[: mod_text.index(":")].rstrip()
     return mod_text
-
-
-def is_valid(text: str) -> bool:
-    """
-    Returns whether text contains valid information, or
-    is just wrongly placed punctuation.
-    """
-    return (len(text) > 1 or text in "12345") and not (
-        text.startswith(":") and text.endswith(":")
-    )
 
 
 @tree.command(
