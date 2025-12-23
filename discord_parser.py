@@ -38,9 +38,11 @@ async def parse_teams(season: dict, category: discord.CategoryChannel) -> dict:
     for channel in category.text_channels:
         if "spelartrupper" in channel.name:
             channel_info = channel.name.split("-")
-            div = channel_info[2]
-            if div == "dl":
-                division = "Dunderligan"
+            if len(channel_info) == 3:
+                if channel_info[1].lower() == "dunderligan" or channel_info[1].lower() == "dl":
+                    division = "Dunderligan"
+                else:
+                    division = "Division " + channel_info[1][-1] 
             else:
                 division = "Division " + channel_info[2][0]
 
@@ -92,7 +94,6 @@ async def parse_teams(season: dict, category: discord.CategoryChannel) -> dict:
                             teams = teams + list(value["teams"].keys())
                     else:
                         done_one_pass = True
-                        print(season_with_teams)
                         print(f"Couldn't find roster '{team_name}' among teams {teams}")
                         team_name = input("Name to instead look for=")
                         continue
@@ -133,132 +134,6 @@ async def parse_teams(season: dict, category: discord.CategoryChannel) -> dict:
     return season_with_teams
 
 
-async def parse_groups(category: discord.CategoryChannel) -> dict:
-    GROUP_NAMES = ["Grupp A", "Grupp B", "Grupp C", "Grupp D"]
-
-    SEASON: dict = {
-        "season": 0,
-        "start_date": None,
-        "legacy_ranks": False,
-        "divisions": {},
-    }
-    DIVISION: dict = {"groups": {}}
-    GROUP: dict = {"teams": {}, "matches": []}
-    TEAM: dict = {"players": []}
-    MATCH: dict = {
-        "date": None,
-        "rosterA": "",
-        "rosterB": "",
-        "teamAScore": 0,
-        "teamBScore": 0,
-        "draws": 0,
-    }
-
-    season: dict = copy.deepcopy(SEASON)
-    start_date = None
-    for channel in category.text_channels:
-        if "spelschema" in channel.name:
-            channel_info = split_on_multiple(channel.name, "-", "_")
-            season["season"] = int(category.name.split()[-1])
-            div = channel_info[1]
-            if div == "dl":
-                division: str = "Dunderligan"
-            else:
-                division: str = "Division " + channel_info[1][3]
-
-            if not season.get("divisions").get(division):
-                season["divisions"][division] = copy.deepcopy(DIVISION)
-
-            message_count = 0
-            async for message in channel.history(limit=4):
-                if season.get("start_date") is None:
-                    start_date = message.created_at.replace(
-                        hour=19, minute=0, second=0, microsecond=0
-                    )
-                    season["start_date"] = start_date.isoformat()
-
-                content = message.content
-                rows = [row for row in content.split("\n")]
-
-                rounds = []
-                current_round = 0
-                current_group = 0
-                ready = False
-                checked_teams = 0
-                added_teams_this_round = 0
-                multiple_groups = False
-                for row in rows:
-                    line = strip_punc(row)
-                    print(line)
-                    if line.lower().startswith("slutspel"):
-                        break
-                    elif line.lower().startswith("omgång") or line.lower().startswith(
-                        "division") or line.lower().startswith("dunderligan"):
-                        rounds.append([])
-                        ready = True
-                        if not multiple_groups:
-                            current_round += 1
-                        current_group = 0
-                        added_teams_this_round = 0
-                    elif current_round == 0:
-                        continue
-                    elif ready and (line.isspace() or line == "") and checked_teams >= 0 and added_teams_this_round > 0:
-                        current_group += 1
-                        multiple_groups = True
-                    elif line.lower().startswith("senast") or line.lower().startswith("spelas "):
-                        continue
-                    elif line != "":
-                        line = split_on_multiple(line.replace("||", ""), "vs.", " - ", " – ")
-
-                        rosterA: str = strip_punc(line[0])
-                        rosterB: str = strip_punc(line[1])
-                        teamAScore: int = 0
-                        teamBScore: int = 0
-                        draws: int = 0
-
-                        if "..." in line[1] or "…" in line[1]:
-                            rest = split_on_multiple(line[1], "...", "…", "..")
-                            rosterB = strip_punc(rest[0])
-                            score = list(map(strip_punc, rest[1].split("-")))
-                            teamAScore = int(score[0][0])
-                            teamBScore = int(score[1][0])
-                            draws = 3 - (teamAScore + teamBScore)
-
-                        match = copy.deepcopy(MATCH)
-                        if start_date:
-                            match["date"] = (
-                                start_date
-                                + datetime.timedelta(days=7 * (current_round - 1))
-                            ).isoformat()
-                        match["rosterA"] = rosterA
-                        match["rosterB"] = rosterB
-                        match["teamAScore"] = teamAScore
-                        match["teamBScore"] = teamBScore
-                        match["draws"] = draws
-
-                        group_number = max(current_group, 0) #message_count)
-                        if not season["divisions"][division]["groups"].get(
-                            GROUP_NAMES[group_number]
-                        ):
-                            season["divisions"][division]["groups"][
-                                GROUP_NAMES[group_number]
-                            ] = copy.deepcopy(GROUP)
-
-                        group = season["divisions"][division]["groups"][
-                            GROUP_NAMES[group_number]
-                        ]
-                        group["matches"].append(match)
-                        if rosterA not in group["teams"]:
-                            group["teams"][rosterA] = copy.deepcopy(TEAM)
-                        if rosterB not in group["teams"]:
-                            group["teams"][rosterB] = copy.deepcopy(TEAM)
-
-                        added_teams_this_round += 1
-
-                message_count += 1
-    return season
-
-
 def get_player_tokens(line: str) -> dict:
     """
     Takes a line from a roster.
@@ -284,7 +159,7 @@ def get_player_tokens(line: str) -> dict:
     ignore_until = -1
     for i in range(len(line)):
         c = line[i]
-        print(c, current_token, i, ignore_until)
+        # print(c, current_token, i, ignore_until)
         if i <= ignore_until:
             continue
         elif c == "<" and line.count(">") > 0:
@@ -355,16 +230,142 @@ def get_player_tokens(line: str) -> dict:
                 break
 
     if tokens.get("battletag") is None:
-        print(tokens)
         raise Exception(f"Couldn't get battletag from {line}")
     elif tokens["battletag"] in ROLES or tokens["battletag"] in RANKS:
-        print(tokens)
         raise Exception(f"Got invalid battletag '{tokens.get("battletag")}' from {line}")
     elif len(tokens["rank"]) == 2 and tokens["rank"][1] > 5:
-        print(tokens)
         raise Exception(f"Got invalid rank '{tokens["rank"]} from {line}")
     
     return tokens
+
+
+async def parse_groups(category: discord.CategoryChannel) -> dict:
+    GROUP_NAMES = ["Grupp A", "Grupp B", "Grupp C", "Grupp D"]
+
+    SEASON: dict = {
+        "season": 0,
+        "start_date": None,
+        "legacy_ranks": False,
+        "divisions": {},
+    }
+    DIVISION: dict = {"groups": {}}
+    GROUP: dict = {"teams": {}, "matches": []}
+    TEAM: dict = {"players": []}
+    MATCH: dict = {
+        "date": None,
+        "rosterA": "",
+        "rosterB": "",
+        "teamAScore": 0,
+        "teamBScore": 0,
+        "draws": 0,
+    }
+
+    season: dict = copy.deepcopy(SEASON)
+    start_date = None
+    for channel in category.text_channels:
+        if "spelschema" in channel.name:
+            channel_info = split_on_multiple(channel.name, "-", "_")
+            season["season"] = int(category.name.split()[-1])
+            div = channel_info[1]
+            if len(channel_info) == 3:
+                if channel_info[1].lower() == "dunderligan" or channel_info[1].lower() == "dl":
+                    division = "Dunderligan"
+                else:
+                    division = "Division " + channel_info[1][-1] 
+            else:
+                division = "Division " + channel_info[2][0]
+
+            if not season.get("divisions").get(division):
+                season["divisions"][division] = copy.deepcopy(DIVISION)
+
+            message_count = 0
+            async for message in channel.history(limit=4):
+                if season.get("start_date") is None:
+                    start_date = message.created_at.replace(
+                        hour=19, minute=0, second=0, microsecond=0
+                    )
+                    season["start_date"] = start_date.isoformat()
+
+                content = message.content
+                rows = [row for row in content.split("\n")]
+
+                rounds = []
+                current_round = 0
+                current_group = 0
+                ready = False
+                checked_teams = 0
+                added_teams_this_round = 0
+                multiple_groups = False
+                for row in rows:
+                    line = strip_punc(row)
+                    if line.lower().startswith("slutspel"):
+                        break
+                    elif line.lower().startswith("omgång") or line.lower().startswith(
+                        "division") or line.lower().startswith("dunderligan"):
+                        rounds.append([])
+                        ready = True
+                        if not multiple_groups:
+                            current_round += 1
+                        current_group = 0
+                        added_teams_this_round = 0
+                    elif current_round == 0:
+                        continue
+                    elif ready and (line.isspace() or line == "") and checked_teams >= 0 and added_teams_this_round > 0:
+                        current_group += 1
+                        multiple_groups = True
+                    elif line.lower().startswith("senast") or line.lower().startswith("spelas "):
+                        continue
+                    elif line != "":
+                        line = split_on_multiple(line.replace("||", ""), "vs.", " - ", " – ")
+
+                        rosterA: str = strip_punc(line[0])
+                        rosterB: str = strip_punc(line[1])
+                        teamAScore: int = 0
+                        teamBScore: int = 0
+                        draws: int = 0
+
+                        if "..." in line[1] or "…" in line[1]:
+                            rest = split_on_multiple(line[1], "...", "…", "..")
+                            rosterB = strip_punc(rest[0])
+                            score = list(map(strip_punc, rest[1].split("-")))
+                            teamAScore = int(score[0][0])
+                            teamBScore = int(score[1][0])
+                            draws = 3 - (teamAScore + teamBScore)
+
+                        match = copy.deepcopy(MATCH)
+                        if start_date:
+                            match["date"] = (
+                                start_date
+                                + datetime.timedelta(days=7 * (current_round - 1))
+                            ).isoformat()
+                        match["rosterA"] = rosterA
+                        match["rosterB"] = rosterB
+                        match["teamAScore"] = teamAScore
+                        match["teamBScore"] = teamBScore
+                        match["draws"] = draws
+
+                        group_number = max(current_group, 0) #message_count)
+                        if not season["divisions"][division]["groups"].get(
+                            GROUP_NAMES[group_number]
+                        ):
+                            season["divisions"][division]["groups"][
+                                GROUP_NAMES[group_number]
+                            ] = copy.deepcopy(GROUP)
+
+                        group = season["divisions"][division]["groups"][
+                            GROUP_NAMES[group_number]
+                        ]
+                        group["matches"].append(match)
+                        if rosterA not in group["teams"]:
+                            group["teams"][rosterA] = copy.deepcopy(TEAM)
+                        if rosterB not in group["teams"]:
+                            group["teams"][rosterB] = copy.deepcopy(TEAM)
+
+                        added_teams_this_round += 1
+
+                message_count += 1
+    return season
+
 
 
 def test_tokens():
