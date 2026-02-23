@@ -266,7 +266,6 @@ async def parse_groups(category: discord.CategoryChannel) -> dict:
         if "spelschema" in channel.name:
             channel_info = split_on_multiple(channel.name, "-", "_")
             season["season"] = int(category.name.split()[-1])
-            div = channel_info[1]
             if len(channel_info) == 3:
                 if channel_info[1].lower() == "dunderligan" or channel_info[1].lower() == "dl":
                     division = "Dunderligan"
