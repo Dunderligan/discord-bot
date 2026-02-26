@@ -8,11 +8,11 @@ def set_up_db():
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS teams (
+        CREATE TABLE IF NOT EXISTS channels (
             id INTEGER PRIMARY KEY,
             type INTEGER NOT NULL,
-            division TEXT NOT NULL,
-            season TEXT NOT NULL
+            season TEXT NOT NULL,
+            division TEXT NOT NULL
         )
     ''')
     connection.commit()
