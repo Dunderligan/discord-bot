@@ -182,7 +182,5 @@ cython_debug/
 /bot-env
 
 # Local data for bot
-old_objects.json
-/generated_images
-/parsed_data
 pseudocode.md
+database.db

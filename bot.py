@@ -35,7 +35,7 @@ async def on_ready():
 
 @tree.command(
     name="create_new_objects",
-    description="Creates a new role, text channel, and voice channel for each team in the given season.",
+    description="Creates channels and roles for all team in a season. Gets data from dunderligan.se API.",
     guild=discord.Object(id=server_id),
 )
 @app_commands.checks.has_role(admin_role_id)
@@ -132,7 +132,7 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 season_slug,
                 division_slug,
                 None,
-                get_admin_permissions(interaction.guild)
+                get_admin_permissions(interaction.guild),
             )
             voice_category: discord.CategoryChannel = await create_channel(
                 interaction.guild,
@@ -141,7 +141,7 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 season_slug,
                 division_slug,
                 None,
-                get_admin_permissions(interaction.guild)
+                get_admin_permissions(interaction.guild),
             )
 
             for group in division["groups"]:
@@ -209,14 +209,37 @@ async def create_channel(
     return channel
 
 
+@tree.command(
+    name="delete_all_objects",
+    description="Deletes all channels and roles previously created by the bot.",
+    guild=discord.Object(id=server_id),
+)
+@app_commands.checks.has_role(admin_role_id)
+async def delete_all_objects(interaction: discord.Interaction) -> None:
+    await interaction.response.defer()
+    cursor = db_connection.cursor()
+    cursor.execute("SELECT id, type FROM channels")
+    channels = cursor.fetchall()
+    for id, type in channels:
+        channel = interaction.guild.get_channel(id)
+        if channel is not None:
+            await channel.delete()
+            print(f"Deleted channel with id: {id}")
+        else:
+            role = interaction.guild.get_role(id)
+            if role is not None:
+                await role.delete()
+                print(f"Deleted role with id: {id}")
+            else:
+                print(f"Could not find channel or role with id: {id}")
+    db_connection.execute("DELETE FROM channels")
+    db_connection.commit()
+    await interaction.followup.send("Finished deleting all objects.")
+
 async def request_seasons():
     url = os.getenv("SEASONS_URL")
     json_data = requests.get(url).json().get("results")
     return json_data
-
-
-def format_name(name: str) -> str:
-    return name.lower()
 
 
 WRITE_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
@@ -228,6 +251,7 @@ READ_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
 NO_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
     view_channel=False, connect=False, send_messages=False, read_message_history=False
 )
+
 
 def get_admin_permissions(guild: discord.Guild) -> dict:
     admin_role: discord.Role = discord.utils.find(

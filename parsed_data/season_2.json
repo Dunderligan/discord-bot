@@ -1,0 +1,1709 @@
+{
+ "season": 2,
+ "start_date": "2020-07-22T19:00:00+00:00",
+ "legacy_ranks": true,
+ "divisions": {
+  "Division 1": {
+   "groups": {
+    "Grupp A": {
+     "teams": {
+      "Hueco Mundo": {
+       "players": [
+        {
+         "battletag": "Wesp",
+         "rank": null,
+         "tier": null,
+         "sr": 4500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Ludde",
+         "rank": null,
+         "tier": null,
+         "sr": 4400,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "\u0114\u0191\u01910\u0158\u0166",
+         "rank": null,
+         "tier": null,
+         "sr": 4300,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Arial",
+         "rank": null,
+         "tier": null,
+         "sr": 4300,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "KingKongUno",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Merc",
+         "rank": null,
+         "tier": null,
+         "sr": 4300,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Petris",
+         "rank": null,
+         "tier": null,
+         "sr": 4400,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Osorio",
+         "rank": null,
+         "tier": null,
+         "sr": 4500,
+         "role": "flex",
+         "is_captain": false
+        }
+       ]
+      },
+      "OG Kittens": {
+       "players": [
+        {
+         "battletag": "Njukas",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "Bleedzz",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Norberg",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Ohscar",
+         "rank": null,
+         "tier": null,
+         "sr": 4200,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "P\u01eepper",
+         "rank": null,
+         "tier": null,
+         "sr": 4200,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "LZL",
+         "rank": null,
+         "tier": null,
+         "sr": 4200,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "MrMindDog",
+         "rank": null,
+         "tier": null,
+         "sr": 3900,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Hojzti",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Son",
+         "rank": null,
+         "tier": null,
+         "sr": 4400,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "MothGN",
+         "rank": null,
+         "tier": null,
+         "sr": 4300,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "High Six": {
+       "players": [
+        {
+         "battletag": "RageMode",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Otispotis",
+         "rank": null,
+         "tier": null,
+         "sr": 2300,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Frog",
+         "rank": null,
+         "tier": null,
+         "sr": 3800,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Supersejna",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "SkyFox",
+         "rank": null,
+         "tier": null,
+         "sr": 3300,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "sweeT",
+         "rank": null,
+         "tier": null,
+         "sr": 3800,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Hope",
+         "rank": null,
+         "tier": null,
+         "sr": 3800,
+         "role": "flex",
+         "is_captain": false
+        }
+       ]
+      },
+      "Leos Angels": {
+       "players": [
+        {
+         "battletag": "TOFFLAN",
+         "rank": null,
+         "tier": null,
+         "sr": 3600,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Naviii",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "BudgetDafran",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Szanto",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "xaRies",
+         "rank": null,
+         "tier": null,
+         "sr": 3600,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Liveja",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Difikoll",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "Visby Musikk\u00e5r": {
+       "players": [
+        {
+         "battletag": "Jocke",
+         "rank": null,
+         "tier": null,
+         "sr": 4300,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "F\u00e4rsk1l\u00f6s",
+         "rank": null,
+         "tier": null,
+         "sr": 4300,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "North",
+         "rank": null,
+         "tier": null,
+         "sr": 3800,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Aliens",
+         "rank": null,
+         "tier": null,
+         "sr": 4000,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Xela909",
+         "rank": null,
+         "tier": null,
+         "sr": 3900,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Nisse",
+         "rank": null,
+         "tier": null,
+         "sr": 3600,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "KienKungas",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Eminem",
+         "rank": null,
+         "tier": null,
+         "sr": 3900,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Arveblad",
+         "rank": null,
+         "tier": null,
+         "sr": 3900,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Tracking",
+         "rank": null,
+         "tier": null,
+         "sr": 3900,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      }
+     },
+     "matches": [
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Hueco Mundo",
+       "rosterB": "OG Kittens",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "High Six",
+       "rosterB": "Leos Angels",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Visby Musikk\u00e5r",
+       "rosterB": "High Six",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "OG Kittens",
+       "rosterB": "Leos Angels",
+       "teamAScore": 1,
+       "teamBScore": 2,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Leos Angels",
+       "rosterB": "Hueco Mundo",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "High Six",
+       "rosterB": "OG Kittens",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Visby Musikk\u00e5r",
+       "rosterB": "OG Kittens",
+       "teamAScore": 2,
+       "teamBScore": 1,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Hueco Mundo",
+       "rosterB": "Visby Musikk\u00e5r",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Leos Angels",
+       "rosterB": "Visby Musikk\u00e5r",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Hueco Mundo",
+       "rosterB": "High Six",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      }
+     ]
+    }
+   }
+  },
+  "Division 2": {
+   "groups": {
+    "Grupp A": {
+     "teams": {
+      "Cool Sharks": {
+       "players": [
+        {
+         "battletag": "ElliottS",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "Hugoolle",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Fantasy",
+         "rank": null,
+         "tier": null,
+         "sr": 3400,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Luwix",
+         "rank": null,
+         "tier": null,
+         "sr": 3300,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Puttelicious",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "KBTurken7up",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "LurigeAlbin",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "StarkeAdrian",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "support",
+         "is_captain": true
+        },
+        {
+         "battletag": "Ninuzzz",
+         "rank": null,
+         "tier": null,
+         "sr": 3300,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "Fredagslir": {
+       "players": [
+        {
+         "battletag": "zarre",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "Jollaa",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Bullerbocken",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "FredericoSWE",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Schenanegans",
+         "rank": null,
+         "tier": null,
+         "sr": 3300,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Hybris",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Lavidabear",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Samieez",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Hontis",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Berlan",
+         "rank": null,
+         "tier": null,
+         "sr": 2200,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "Operation Platchat": {
+       "players": [
+        {
+         "battletag": "ArkJR",
+         "rank": null,
+         "tier": null,
+         "sr": 3400,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "\u01fe\u013f\u013f\u012c",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Drijyh",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Stetsonbryl",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Ragge",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Vilgotino",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Pakku",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Villroy",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "P1CKR",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Shadowstorm",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "TheWiCaT",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "flex",
+         "is_captain": false
+        }
+       ]
+      },
+      "Snubbull Cheersquad": {
+       "players": [
+        {
+         "battletag": "Psychic",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "Frasse",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "WildRage",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Molle",
+         "rank": null,
+         "tier": null,
+         "sr": 1700,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Avve",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Er5ksson",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "MrGoldenGust",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Demonhead",
+         "rank": null,
+         "tier": null,
+         "sr": 1900,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Growlrice",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "NeanN",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Sumum",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Nail3n",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "Positiva J\u00e4vlar": {
+       "players": [
+        {
+         "battletag": "Pirulo",
+         "rank": null,
+         "tier": null,
+         "sr": 3700,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "NRH",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "RedX",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Crystali8ed",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "\u0206\u0181\u020e\u0176\u01c3",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Aximel",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Quzem",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Kongo",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "flex",
+         "is_captain": true
+        },
+        {
+         "battletag": "CuteViking",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Doppelganger",
+         "rank": null,
+         "tier": null,
+         "sr": 1600,
+         "role": "flex",
+         "is_captain": false
+        }
+       ]
+      },
+      "Handsome Gaming": {
+       "players": [
+        {
+         "battletag": "Swelisk",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Turtlebro",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "GhostDragon",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Anoda",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "Viggo",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "BenjiGenji08",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Puffilimur",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "N0xy",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "IceY",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Dannemannen",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Makaronerbtw",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      }
+     },
+     "matches": [
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Cool Sharks",
+       "rosterB": "Fredagslir",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Operation Platchat",
+       "rosterB": "Snubbull Cheersquad",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Positiva J\u00e4vlar",
+       "rosterB": "Handsome Gaming",
+       "teamAScore": 1,
+       "teamBScore": 2,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Handsome Gaming",
+       "rosterB": "Cool Sharks",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Fredagslir",
+       "rosterB": "Operation Platchat",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Snubbull Cheersquad",
+       "rosterB": "Positiva J\u00e4vlar",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Operation Platchat",
+       "rosterB": "Positiva J\u00e4vlar",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Cool Sharks",
+       "rosterB": "Snubbull Cheersquad",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Handsome Gaming",
+       "rosterB": "Fredagslir",
+       "teamAScore": 2,
+       "teamBScore": 1,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Handsome Gaming",
+       "rosterB": "Operation Platchat",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Positiva J\u00e4vlar",
+       "rosterB": "Cool Sharks",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Snubbull Cheersquad",
+       "rosterB": "Fredagslir",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Cool Sharks",
+       "rosterB": "Operation Platchat",
+       "teamAScore": 0,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Handsome Gaming",
+       "rosterB": "Snubbull Cheersquad",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Fredagslir",
+       "rosterB": "Positiva J\u00e4vlar",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      }
+     ]
+    },
+    "Grupp B": {
+     "teams": {
+      "Plan B": {
+       "players": [
+        {
+         "battletag": "Duckie",
+         "rank": null,
+         "tier": null,
+         "sr": 3400,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "DE3MO",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "D3viil",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "GreenTomte",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "Okaffe",
+         "rank": null,
+         "tier": null,
+         "sr": 3300,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Malteh",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Kassians/Wabuu",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "P1xel",
+         "rank": null,
+         "tier": null,
+         "sr": 3400,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Salty/Guacamole",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "BleuShell",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "/",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "support",
+         "is_captain": true
+        }
+       ]
+      },
+      "Team Commando": {
+       "players": [
+        {
+         "battletag": "Aceu",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Zekiv",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Floyman06",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "S7reek",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Scar",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "MrPetzzon",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Testaccount",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "GiffelPojke",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "EmilPojke",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Vimaat027",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Maxi701",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "DNF",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "SHTABILT": {
+       "players": [
+        {
+         "battletag": "FOX",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Anoda",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "\u013f\u01d5\u0156\u0138\u01fe\u015c\u01fc\u014a\u0190",
+         "rank": null,
+         "tier": null,
+         "sr": 3300,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "AffeDaBoss",
+         "rank": null,
+         "tier": null,
+         "sr": 2200,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "ProteinShake",
+         "rank": null,
+         "tier": null,
+         "sr": 2600,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "TotallyAGirl",
+         "rank": null,
+         "tier": null,
+         "sr": 3800,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Shellex",
+         "rank": null,
+         "tier": null,
+         "sr": 2300,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "OZZIV",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Mecha919",
+         "rank": null,
+         "tier": null,
+         "sr": 3100,
+         "role": "flex",
+         "is_captain": false
+        }
+       ]
+      },
+      "Valoria Paragons": {
+       "players": [
+        {
+         "battletag": "pinkprincess",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Popzzan",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Miseinen",
+         "rank": null,
+         "tier": null,
+         "sr": 1900,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Annamalistic",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "Angieliq",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Halloumi",
+         "rank": null,
+         "tier": null,
+         "sr": 2700,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "SpannaY",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "Silentperson",
+         "rank": null,
+         "tier": null,
+         "sr": 2300,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "Spirit Dragons": {
+       "players": [
+        {
+         "battletag": "MrFjantis",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "WoXo",
+         "rank": null,
+         "tier": null,
+         "sr": 2400,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "Snuggegus",
+         "rank": null,
+         "tier": null,
+         "sr": 2100,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "FrozenHeart2",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Ax3l",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "swegamer",
+         "rank": null,
+         "tier": null,
+         "sr": 2300,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "Kexdealer",
+         "rank": null,
+         "tier": null,
+         "sr": 1800,
+         "role": "tank",
+         "is_captain": false
+        },
+        {
+         "battletag": "HappyDays",
+         "rank": null,
+         "tier": null,
+         "sr": 2500,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "S7eek",
+         "rank": null,
+         "tier": null,
+         "sr": 2300,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      },
+      "Team Reverz": {
+       "players": [
+        {
+         "battletag": "Falcon",
+         "rank": null,
+         "tier": null,
+         "sr": 3000,
+         "role": "damage",
+         "is_captain": true
+        },
+        {
+         "battletag": "AZX",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Abbe",
+         "rank": null,
+         "tier": null,
+         "sr": 3500,
+         "role": "damage",
+         "is_captain": false
+        },
+        {
+         "battletag": "Cosmos",
+         "rank": null,
+         "tier": null,
+         "sr": 3200,
+         "role": "flex",
+         "is_captain": false
+        },
+        {
+         "battletag": "AbbeBoom",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "tank",
+         "is_captain": true
+        },
+        {
+         "battletag": "sk\u00f6dgris",
+         "rank": null,
+         "tier": null,
+         "sr": 2900,
+         "role": "support",
+         "is_captain": false
+        },
+        {
+         "battletag": "SkyMull",
+         "rank": null,
+         "tier": null,
+         "sr": 2800,
+         "role": "support",
+         "is_captain": false
+        }
+       ]
+      }
+     },
+     "matches": [
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Plan B",
+       "rosterB": "Team Commando",
+       "teamAScore": 1,
+       "teamBScore": 2,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "SHTABILT",
+       "rosterB": "Valoria Paragons",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Spirit Dragons",
+       "rosterB": "Team Reverz",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Team Reverz",
+       "rosterB": "SHTABILT",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Team Commando",
+       "rosterB": "Valoria Paragons",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Plan B",
+       "rosterB": "Spirit Dragons",
+       "teamAScore": 3,
+       "teamBScore": 0,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Valoria Paragons",
+       "rosterB": "Plan B",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Team Reverz",
+       "rosterB": "Team Commando",
+       "teamAScore": 1,
+       "teamBScore": 2,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Spirit Dragons",
+       "rosterB": "SHTABILT",
+       "teamAScore": 1,
+       "teamBScore": 2,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Valoria Paragons",
+       "rosterB": "Team Reverz",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "SHTABILT",
+       "rosterB": "Plan B",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Team Commando",
+       "rosterB": "Spirit Dragons",
+       "teamAScore": 2,
+       "teamBScore": 1,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Plan B",
+       "rosterB": "Team Reverz",
+       "teamAScore": 2,
+       "teamBScore": 1,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "Spirit Dragons",
+       "rosterB": "Valoria Paragons",
+       "teamAScore": 1,
+       "teamBScore": 2,
+       "draws": 0
+      },
+      {
+       "date": "2020-07-22T19:00:00+00:00",
+       "rosterA": "SHTABILT",
+       "rosterB": "Team Commando",
+       "teamAScore": 0,
+       "teamBScore": 3,
+       "draws": 0
+      }
+     ]
+    }
+   }
+  }
+ }
+}
