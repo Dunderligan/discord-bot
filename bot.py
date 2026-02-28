@@ -14,10 +14,15 @@ from dotenv import load_dotenv
 from discord import app_commands
 
 load_dotenv()
-token = os.getenv("TOKEN")
-server_id: int = int(os.getenv("SERVER_ID"))
-admin_role_id: int = int(os.getenv("ADMIN_ID"))
-observer_role_id: int = int(os.getenv("OBSERVER_ID"))
+try:
+    token = os.getenv("TOKEN")
+    server_id: int = int(os.getenv("SERVER_ID"))
+    admin_role_id: int = int(os.getenv("ADMIN_ID"))
+    observer_role_id: int = int(os.getenv("OBSERVER_ID"))
+    captains_role_id: int = int(os.getenv("CAPTAINS_ID"))
+except Exception as e:
+    print(f"Error loading environment variables: {e}")
+    exit(1)
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -42,8 +47,11 @@ async def on_ready():
 async def create_new_objects(interaction: discord.Interaction) -> None:
     await interaction.response.defer()
     seasons = await request_seasons()
+    if seasons is None:
+        await interaction.followup.send("Failed to fetch seasons.")
+        return
 
-    season_name = "Säsong 1"
+    season_name = "Säsong 8"
 
     for season in seasons:
         print(f"{season['name']}")
@@ -124,6 +132,15 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 division_slug,
                 info_category,
                 division_permissions,
+            )
+            await create_channel(
+                interaction.guild,
+                1,
+                f"rapportera-bans-div{division_slug}-{season_slug}",
+                season_slug,
+                division_slug,
+                info_category,
+                get_captains_permissions(interaction.guild),
             )
             text_category: discord.CategoryChannel = await create_channel(
                 interaction.guild,
@@ -206,6 +223,7 @@ async def create_channel(
         (channel.id, type, season, division),
     )
     db_connection.commit()
+    await asyncio.sleep(0.2)  # Sleep to avoid hitting rate limits
     return channel
 
 
@@ -237,9 +255,13 @@ async def delete_all_objects(interaction: discord.Interaction) -> None:
     await interaction.followup.send("Finished deleting all objects.")
 
 async def request_seasons():
-    url = os.getenv("SEASONS_URL")
-    json_data = requests.get(url).json().get("results")
-    return json_data
+    try:
+        url = os.getenv("SEASONS_URL")
+        json_data = requests.get(url, timeout=10).json().get("results")
+        return json_data
+    except Exception as e:
+        print(f"Error fetching seasons: {e}")
+        return None
 
 
 WRITE_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
@@ -265,31 +287,26 @@ def get_admin_permissions(guild: discord.Guild) -> dict:
 
 
 def get_team_permissions(guild: discord.Guild, team_role: discord.Role) -> dict:
-    admin_role: discord.Role = discord.utils.find(
-        lambda r: r.id == admin_role_id, guild.roles
-    )
-    overwrites: dict[discord.Role, discord.PermissionOverwrite] = {
-        guild.default_role: NO_PERMISSIONS,
-        team_role: WRITE_PERMISSIONS,
-        admin_role: WRITE_PERMISSIONS,
-    }
+    overwrites = get_admin_permissions(guild)
+    overwrites[team_role] = READ_PERMISSIONS
     return overwrites
 
 
 def get_division_permissions(guild: discord.Guild, division_roles) -> dict:
-    admin_role: discord.Role = discord.utils.find(
-        lambda r: r.id == admin_role_id, guild.roles
-    )
     observer_role: discord.Role = discord.utils.find(
         lambda r: r.id == observer_role_id, guild.roles
     )
-    overwrites: dict[discord.Role, discord.PermissionOverwrite] = {
-        guild.default_role: NO_PERMISSIONS,
-        admin_role: WRITE_PERMISSIONS,
-        observer_role: READ_PERMISSIONS,
-    }
+    overwrites = get_admin_permissions(guild)
+    overwrites[observer_role] = READ_PERMISSIONS
     for role in division_roles:
         overwrites[role] = READ_PERMISSIONS
+    return overwrites
+
+def get_captains_permissions(guild: discord.Guild) -> dict:
+    captains_role: discord.Role = discord.utils.find(
+        lambda r: r.id == captains_role_id, guild.roles
+    )
+    overwrites = {captains_role: WRITE_PERMISSIONS}
     return overwrites
 
 
