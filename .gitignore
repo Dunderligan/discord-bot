@@ -180,5 +180,7 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 /bot-env
-old_objects.json
-/generated_images
+
+# Local data for bot
+pseudocode.md
+database.db
