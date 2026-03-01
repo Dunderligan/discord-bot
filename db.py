@@ -12,7 +12,8 @@ def set_up_db():
             id INTEGER PRIMARY KEY,
             type INTEGER NOT NULL,
             season TEXT NOT NULL,
-            division TEXT NOT NULL
+            division TEXT NOT NULL,
+            team INTEGER
         )
     ''')
     connection.commit()

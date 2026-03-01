@@ -65,6 +65,10 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
 
             division_name = division["name"]
             division_slug = division["slug"]
+            if division_slug == "dunderserien":
+                division_slug = "ds"
+            else:
+                division_slug = "div" + division_slug[0]
 
             division_roles = {}
             for group in division["groups"]:
@@ -75,8 +79,8 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                         name=team_name
                     )
                     db_connection.execute(
-                        "INSERT INTO channels (id, type, season, division) VALUES (?, ?, ?, ?)",
-                        (team_role.id, 3, season_name, division_name),
+                        "INSERT INTO channels (id, type, season, division, team) VALUES (?, ?, ?, ?, ?)",
+                        (team_role.id, 3, season_name, division_name, team["id"]),
                     )
                     db_connection.commit()
                     division_roles[team_name] = team_role
@@ -95,52 +99,58 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 season_slug,
                 division_slug,
                 None,
+                None,
                 division_permissions,
             )
             await create_channel(
                 interaction.guild,
                 1,
-                f"spelschema-div{division_slug}-{season_slug}",
+                f"spelschema-{division_slug}-{season_slug}",
                 season_slug,
                 division_slug,
+                None,
                 info_category,
                 division_permissions,
             )
             await create_channel(
                 interaction.guild,
                 1,
-                f"tabell-div{division_slug}-{season_slug}",
+                f"tabell-{division_slug}-{season_slug}",
                 season_slug,
                 division_slug,
+                None,
                 info_category,
                 division_permissions,
             )
             await create_channel(
                 interaction.guild,
                 1,
-                f"information-div{division_slug}-{season_slug}",
+                f"information-{division_slug}-{season_slug}",
                 season_slug,
                 division_slug,
+                None,
                 info_category,
                 division_permissions,
             )
             await create_channel(
                 interaction.guild,
                 1,
-                f"spelartrupper-div{division_slug}-{season_slug}",
+                f"spelartrupper-{division_slug}-{season_slug}",
                 season_slug,
                 division_slug,
+                None,
                 info_category,
                 division_permissions,
             )
             await create_channel(
                 interaction.guild,
                 1,
-                f"rapportera-bans-div{division_slug}-{season_slug}",
+                f"rapportera-bans-{division_slug}-{season_slug}",
                 season_slug,
                 division_slug,
+                None,
                 info_category,
-                get_captains_permissions(interaction.guild),
+                get_captains_permissions(interaction.guild, division_roles.values()),
             )
             text_category: discord.CategoryChannel = await create_channel(
                 interaction.guild,
@@ -148,6 +158,7 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 f"{season_name} - {division_name} - Klubbhus",
                 season_slug,
                 division_slug,
+                None,
                 None,
                 get_admin_permissions(interaction.guild),
             )
@@ -158,6 +169,7 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 season_slug,
                 division_slug,
                 None,
+                None,
                 get_admin_permissions(interaction.guild),
             )
 
@@ -165,26 +177,31 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 for team in group["rosters"]:
                     team_name = team["name"]
                     team_slug = team["slug"]
+                    team_id = team["id"]
 
                     team_role = division_roles[team_name]
                     team_permissions = get_team_permissions(
                         interaction.guild, team_role
                     )
-                    await create_channel(
+                    text_channel = await create_channel(
                         interaction.guild,
                         1,
                         f"{team_slug}",
                         season_slug,
                         division_slug,
+                        team_id,
                         text_category,
                         team_permissions,
                     )
+                    await text_channel.send(f"Välkommen till klubbhuset för {team_name}!\nHär kan ni kommunicera inom laget, men det kommer också vara här som ligaledningen kan ta kontakt med er.")
+
                     await create_channel(
                         interaction.guild,
                         2,
                         f"{team_name}",
                         season_slug,
                         division_slug,
+                        team_id,
                         voice_category,
                         team_permissions,
                     )
@@ -200,6 +217,7 @@ async def create_channel(
     name: str,
     season: str,
     division: str,
+    team: str,
     category: discord.CategoryChannel,
     overwrites: dict,
 ):
@@ -219,8 +237,8 @@ async def create_channel(
         )
 
     db_connection.execute(
-        "INSERT INTO channels (id, type, season, division) VALUES (?, ?, ?, ?)",
-        (channel.id, type, season, division),
+        "INSERT INTO channels (id, type, season, division, team) VALUES (?, ?, ?, ?, ?)",
+        (channel.id, type, season, division, team),
     )
     db_connection.commit()
     await asyncio.sleep(0.2)  # Sleep to avoid hitting rate limits
@@ -239,6 +257,7 @@ async def delete_all_objects(interaction: discord.Interaction) -> None:
     cursor.execute("SELECT id, type FROM channels")
     channels = cursor.fetchall()
     for id, type in channels:
+        await asyncio.sleep(0.2)  # Sleep to avoid hitting rate limits
         channel = interaction.guild.get_channel(id)
         if channel is not None:
             await channel.delete()
@@ -273,6 +292,9 @@ READ_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
 NO_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
     view_channel=False, connect=False, send_messages=False, read_message_history=False
 )
+ONLY_WRITE_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrite(
+    connect=True, send_messages=True
+)
 
 
 def get_admin_permissions(guild: discord.Guild) -> dict:
@@ -302,11 +324,12 @@ def get_division_permissions(guild: discord.Guild, division_roles) -> dict:
         overwrites[role] = READ_PERMISSIONS
     return overwrites
 
-def get_captains_permissions(guild: discord.Guild) -> dict:
+def get_captains_permissions(guild: discord.Guild, division_roles) -> dict:
     captains_role: discord.Role = discord.utils.find(
         lambda r: r.id == captains_role_id, guild.roles
     )
-    overwrites = {captains_role: WRITE_PERMISSIONS}
+    overwrites = get_division_permissions(guild, division_roles)
+    overwrites[captains_role] = ONLY_WRITE_PERMISSIONS
     return overwrites
 
 
