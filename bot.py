@@ -334,6 +334,43 @@ def get_captains_permissions(guild: discord.Guild, division_roles) -> dict:
 
 
 @tree.command(
+    name="read_checkins",
+    description="Reads check-ins for all players, and gives out team roles.",
+    guild=discord.Object(id=server_id),
+)
+@app_commands.checks.has_role(admin_role_id)
+async def read_checkins(interaction: discord.Interaction, channel: discord.TextChannel) -> None:
+    await interaction.response.defer()
+    season = "Säsong 8"
+    seasons = await request_seasons()
+    divisions = None
+    for s in seasons:
+        if s["name"] == season:
+            divisions = s["divisions"]
+            break
+    if divisions is None:
+        await interaction.followup.send("Failed to fetch divisions.")
+        return
+    teams = [team for division in divisions for group in division["groups"] for team in group["rosters"]]
+
+    async for message in channel.history(limit=500):
+        if message.author.bot:
+            continue
+        for team in teams:
+            if team["name"].lower() in message.content.lower():
+                role = interaction.guild.get_role(db_connection.execute(
+                    "SELECT id FROM channels WHERE type = 3 AND team = ?", (team["id"],)
+                ).fetchone()[0])
+                await message.author.add_roles(role)
+                await message.add_reaction("✅")
+                print(f"Added role {role.name} to user {message.author.name} for team {team['name']}")
+                break
+        await message.add_reaction("❌")
+
+    await interaction.followup.send("Completed.")
+
+
+@tree.command(
     name="print_rosters",
     description="Prints rosters for all team in division",
     guild=discord.Object(id=server_id),

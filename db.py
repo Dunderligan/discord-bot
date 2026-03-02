@@ -16,5 +16,13 @@ def set_up_db():
             team INTEGER
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS players (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            battletag TEXT NOT NULL,
+            team INTEGER,
+        )
+    ''')
     connection.commit()
     connection.close()
