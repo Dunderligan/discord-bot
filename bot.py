@@ -18,6 +18,7 @@ try:
     token = os.getenv("TOKEN")
     server_id: int = int(os.getenv("SERVER_ID"))
     admin_role_id: int = int(os.getenv("ADMIN_ID"))
+    mod_role_id: int = int(os.getenv("MOD_ID"))
     observer_role_id: int = int(os.getenv("OBSERVER_ID"))
     captains_role_id: int = int(os.getenv("CAPTAINS_ID"))
 except Exception as e:
@@ -74,10 +75,19 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
             for group in division["groups"]:
                 for team in group["rosters"]:
                     team_name = team["name"]
+                    previously_created_role = db_connection.execute("SELECT id FROM channels WHERE type = 3 AND team = ?", (team["id"],)).fetchone()
+                    if previously_created_role is not None:
+                        division_roles[team_name] = discord.utils.find(
+                            lambda r: r.id == previously_created_role[0], interaction.guild.roles
+                        )
+                        continue
+
                     team_slug = team["slug"]
+                    print(f"Starts creating role for team: {team_name}")
                     team_role: discord.Role = await interaction.guild.create_role(
                         name=team_name
                     )
+                    print(f"Finished creating role for team: {team_name}")
                     db_connection.execute(
                         "INSERT INTO channels (id, type, season, division, team) VALUES (?, ?, ?, ?, ?)",
                         (team_role.id, 3, season_name, division_name, team["id"]),
@@ -102,6 +112,8 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 None,
                 division_permissions,
             )
+            print(f"Created info_category: {info_category.name}")
+            print(f"Attempting to create spelschema channel with overwrites: {division_permissions}")
             await create_channel(
                 interaction.guild,
                 1,
@@ -112,6 +124,7 @@ async def create_new_objects(interaction: discord.Interaction) -> None:
                 info_category,
                 division_permissions,
             )
+            print("Created spelschema channel")
             await create_channel(
                 interaction.guild,
                 1,
@@ -222,27 +235,31 @@ async def create_channel(
     overwrites: dict,
 ):
     channel = None
-    if type == 0:
-        if overwrites is not None:
-            channel = await guild.create_category(name=name, overwrites=overwrites)
-        else:
-            channel = await guild.create_category(name=name)
-    elif type == 1:
-        channel = await guild.create_text_channel(
-            name=name, category=category, overwrites=overwrites
-        )
-    elif type == 2:
-        channel = await guild.create_voice_channel(
-            name=name, category=category, overwrites=overwrites
-        )
+    try:
+        if type == 0:
+            if overwrites is not None:
+                channel = await guild.create_category(name=name, overwrites=overwrites)
+            else:
+                channel = await guild.create_category(name=name)
+        elif type == 1:
+            channel = await guild.create_text_channel(
+                name=name, category=category, overwrites=overwrites
+            )
+        elif type == 2:
+            channel = await guild.create_voice_channel(
+                name=name, category=category, overwrites=overwrites
+            )
 
-    db_connection.execute(
-        "INSERT INTO channels (id, type, season, division, team) VALUES (?, ?, ?, ?, ?)",
-        (channel.id, type, season, division, team),
-    )
-    db_connection.commit()
-    await asyncio.sleep(0.2)  # Sleep to avoid hitting rate limits
-    return channel
+        db_connection.execute(
+            "INSERT INTO channels (id, type, season, division, team) VALUES (?, ?, ?, ?, ?)",
+            (channel.id, type, season, division, team),
+        )
+        db_connection.commit()
+        await asyncio.sleep(0.2)  # Sleep to avoid hitting rate limits
+        return channel
+    except Exception as e:
+        print(f"Error creating channel {name}: {e}")
+        return None
 
 
 @tree.command(
@@ -298,11 +315,15 @@ ONLY_WRITE_PERMISSIONS: discord.PermissionOverwrite = discord.PermissionOverwrit
 
 
 def get_admin_permissions(guild: discord.Guild) -> dict:
+    bot_role: discord.Role = discord.utils.find(
+        lambda r: r.name == "Dunderbot", guild.roles
+    )
     admin_role: discord.Role = discord.utils.find(
         lambda r: r.id == admin_role_id, guild.roles
     )
     overwrites: dict[discord.Role, discord.PermissionOverwrite] = {
         guild.default_role: NO_PERMISSIONS,
+        bot_role: WRITE_PERMISSIONS,
         admin_role: WRITE_PERMISSIONS,
     }
     return overwrites
@@ -318,8 +339,14 @@ def get_division_permissions(guild: discord.Guild, division_roles) -> dict:
     observer_role: discord.Role = discord.utils.find(
         lambda r: r.id == observer_role_id, guild.roles
     )
+    mod_role: discord.Role = discord.utils.find(
+        lambda r: r.id == mod_role_id, guild.roles
+    )
     overwrites = get_admin_permissions(guild)
-    overwrites[observer_role] = READ_PERMISSIONS
+    if mod_role is not None:
+        overwrites[mod_role] = WRITE_PERMISSIONS
+    if observer_role is not None:
+        overwrites[observer_role] = READ_PERMISSIONS
     for role in division_roles:
         overwrites[role] = READ_PERMISSIONS
     return overwrites
@@ -329,45 +356,9 @@ def get_captains_permissions(guild: discord.Guild, division_roles) -> dict:
         lambda r: r.id == captains_role_id, guild.roles
     )
     overwrites = get_division_permissions(guild, division_roles)
-    overwrites[captains_role] = ONLY_WRITE_PERMISSIONS
+    if captains_role is not None:
+        overwrites[captains_role] = ONLY_WRITE_PERMISSIONS
     return overwrites
-
-
-@tree.command(
-    name="read_checkins",
-    description="Reads check-ins for all players, and gives out team roles.",
-    guild=discord.Object(id=server_id),
-)
-@app_commands.checks.has_role(admin_role_id)
-async def read_checkins(interaction: discord.Interaction, channel: discord.TextChannel) -> None:
-    await interaction.response.defer()
-    season = "Säsong 8"
-    seasons = await request_seasons()
-    divisions = None
-    for s in seasons:
-        if s["name"] == season:
-            divisions = s["divisions"]
-            break
-    if divisions is None:
-        await interaction.followup.send("Failed to fetch divisions.")
-        return
-    teams = [team for division in divisions for group in division["groups"] for team in group["rosters"]]
-
-    async for message in channel.history(limit=500):
-        if message.author.bot:
-            continue
-        for team in teams:
-            if team["name"].lower() in message.content.lower():
-                role = interaction.guild.get_role(db_connection.execute(
-                    "SELECT id FROM channels WHERE type = 3 AND team = ?", (team["id"],)
-                ).fetchone()[0])
-                await message.author.add_roles(role)
-                await message.add_reaction("✅")
-                print(f"Added role {role.name} to user {message.author.name} for team {team['name']}")
-                break
-        await message.add_reaction("❌")
-
-    await interaction.followup.send("Completed.")
 
 
 @tree.command(
