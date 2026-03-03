@@ -429,6 +429,26 @@ async def print_rosters(interaction: discord.Interaction) -> None:
     await interaction.followup.send("Completed.")
 
 
+@tree.command(
+    name="update_voice_channels",
+    description="Updates voice channels for all teams in division",
+    guild=discord.Object(id=server_id),
+)
+async def update_voice_channels(interaction: discord.Interaction) -> None:
+    await interaction.response.defer()
+
+    voice_channels = db_connection.execute("SELECT id, team FROM channels WHERE type = 2").fetchall()
+    for channel_id, team_id in voice_channels:
+        channel = interaction.guild.get_channel(channel_id)
+        if channel is None:
+            print(f"Could not find channel with id: {channel_id}")
+            continue
+        await channel.edit(user_limit=5)
+        print(f"Updated voice channel with id: {channel_id}")
+
+    await interaction.followup.send("Completed.")
+
+
 async def check_updates():
     while True:
         await asyncio.sleep(5)
