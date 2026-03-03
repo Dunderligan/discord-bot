@@ -331,7 +331,7 @@ def get_admin_permissions(guild: discord.Guild) -> dict:
 
 def get_team_permissions(guild: discord.Guild, team_role: discord.Role) -> dict:
     overwrites = get_admin_permissions(guild)
-    overwrites[team_role] = READ_PERMISSIONS
+    overwrites[team_role] = WRITE_PERMISSIONS
     return overwrites
 
 
@@ -368,6 +368,64 @@ def get_captains_permissions(guild: discord.Guild, division_roles) -> dict:
 )
 async def print_rosters(interaction: discord.Interaction) -> None:
     await interaction.response.defer()
+    
+    # Load output.json
+    import json
+    try:
+        with open("output.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        await interaction.followup.send(f"Failed to load output.json: {e}")
+        return
+    
+    try:
+        divisions = data.get("divisions", {})
+        for division_name, division_data in divisions.items():
+            
+            groups = division_data.get("groups", {})
+            for group_name, group_data in groups.items():
+                
+                teams = group_data.get("teams", {})
+                for team_name, team_data in teams.items():
+                    players = team_data.get("players", [])
+                    
+                    # Build team roster
+                    team_msg = f"## {team_name}\n"
+
+                    roles = {"tank": 0, "damage": 1, "support": 2, "flex": 3, "coach": 4, "manager": 5}
+                    ranks = {"champion": "champion", "grandmaster": "gm", "master": "master", "diamond": "dia", "platinum": "plat", "gold": "guld", "silver": "silver", "bronze": "bronze"}
+                    players.sort(key=lambda p: roles.get(p.get("role", "flex"), 3))  # Default to flex if role is unknown
+                    on_staff = False
+                    
+                    for player in players:
+                        battletag = player.get("battletag", "Unknown")
+                        role = player.get("role", "N/A")
+                        if role in ["coach", "manager"] and not on_staff:
+                            team_msg += "\n"
+                            on_staff = True
+
+                        rank = player.get("rank", "N/A")
+                        tier = player.get("tier", "N/A")
+                        is_captain = player.get("is_captain", False)
+                        
+                        captain_mark = "**C**" if is_captain else ""
+
+                        rank_emote = discord.utils.get(interaction.guild.emojis, name=str(ranks.get(rank)).lower())
+                        role_emote = discord.utils.get(interaction.guild.emojis, name=str(role).lower())
+
+                        if role in ["coach", "manager"]:
+                            team_msg += f"{role_emote} {str(role).capitalize()} - {str(battletag).split("#")[0]}\n"
+                        elif rank and tier:
+                            team_msg += f"{rank_emote} {role_emote} *{str(rank).capitalize()} {tier}, {str(role).capitalize()}* - {f'__{battletag}__' if captain_mark else str(battletag).split("#")[0]} {captain_mark}\n"
+                        elif rank:
+                            team_msg += f"{rank_emote} {role_emote} *{str(rank).capitalize()}, {str(role).capitalize()}* - {battletag} **{captain_mark}**\n"
+                        else:
+                            team_msg += f"{role_emote} *Unranked, {str(role).capitalize()}* - {battletag} **{captain_mark}**\n"
+                    
+                    await interaction.channel.send(team_msg)
+    except Exception as e:
+        await interaction.followup.send(f"Failed to process rosters: {e}")
+        return
     await interaction.followup.send("Completed.")
 
 
