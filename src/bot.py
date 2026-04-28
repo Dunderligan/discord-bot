@@ -6,8 +6,8 @@ import datetime
 import asyncio
 import sqlite3
 
-import db
-import youtube_integration
+import src.db as db
+import src.youtube_integration as youtube_integration
 
 from dotenv import load_dotenv
 from discord import app_commands
