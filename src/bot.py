@@ -55,7 +55,11 @@ async def on_ready():
     await tree.sync(guild=discord.Object(id=server_id))
 
 
-@client.event
+@tree.command(
+    name="ping",
+    description="Ping the bot.",
+    guild=discord.Object(id=server_id),
+)
 @tree.command(name="ping", description="Replies with Pong!", guild=discord.Object(id=server_id))
 async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
