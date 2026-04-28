@@ -4,9 +4,7 @@ import os
 
 import datetime
 import asyncio
-import sqlite3
 
-import db as db
 import youtube_integration as youtube_integration
 
 from dotenv import load_dotenv
@@ -28,7 +26,6 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-db_connection: sqlite3.Connection
 yt_integration = youtube_integration.YoutubeIntegration(yt_token)
 yt_integration.monitor_channel(yt_channel_id)
 
@@ -68,10 +65,6 @@ async def check_updates():
 
 async def main():
     """Runs client that checks for user-commands and server-side updates in parallell"""
-    global db_connection
-    db_connection = db.get_db_connection()
-    db.set_up_db()
-
     await asyncio.gather(client.start(token), check_updates())
 
 
