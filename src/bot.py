@@ -61,7 +61,11 @@ async def on_ready():
 async def check_updates():
     """Checks for updates on YouTube channel every hour."""
     while True:
-        await asyncio.sleep(3600)  # Updates every hour
+        # Calculates time until next check at 5 minutes past whole hour
+        # 5 past because many videos are published at 12.00, 13.00 etc, and checking them
+        # right at the hour might miss them
+        time_until_next_check = datetime.datetime.now().replace(minute=5, second=0, microsecond=0) + datetime.timedelta(hours=1) - datetime.datetime.now()
+        await asyncio.sleep(time_until_next_check.total_seconds())
         print(f"Checking for updates at {datetime.datetime.now()}")
         await yt_integration.check_for_new_videos()
 
