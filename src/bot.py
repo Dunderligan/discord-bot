@@ -1,32 +1,33 @@
 # https://discordpy.readthedocs.io/en/latest/api.html
-import discord
-import os
-
-import datetime
 import asyncio
+import datetime
+import os
+import sys
 
-import youtube_integration as youtube_integration
-
-from dotenv import load_dotenv
+import discord
 from discord import app_commands
+from dotenv import load_dotenv
+
+import youtube_integration as yt
 
 load_dotenv()
-try:
-    token = os.getenv("TOKEN")
-    server_id: int = int(os.getenv("SERVER_ID"))
-    yt_token = os.getenv("YOUTUBE_API_KEY")
-    yt_channel_id = os.getenv("YOUTUBE_CHANNEL_ID")
-    yt_notification_channel_id = os.getenv("YOUTUBE_NOTIFICATION_CHANNEL_ID")
-except Exception as e:
+token = os.getenv("TOKEN")
+server_id: int = int(os.getenv("SERVER_ID"))
+yt_token = os.getenv("YOUTUBE_API_KEY")
+yt_channel_id = os.getenv("YOUTUBE_CHANNEL_ID")
+yt_notification_channel_id = os.getenv("YOUTUBE_NOTIFICATION_CHANNEL_ID")
+
+if token is None or server_id is None or yt_token is None or yt_channel_id is None or yt_notification_channel_id is None:
+    e = "One or more environment variables are missing. Please check your .env file."
     print(f"Error loading environment variables: {e}")
-    exit(1)
+    sys.exit(1)
 
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-yt_integration = youtube_integration.YoutubeIntegration(yt_token)
+yt_integration = yt.YoutubeIntegration(yt_token)
 yt_integration.monitor_channel(yt_channel_id)
 
 
@@ -70,7 +71,7 @@ async def check_updates():
         time_until_next_check = datetime.datetime.now().replace(minute=5, second=0, microsecond=0) + datetime.timedelta(hours=1) - datetime.datetime.now()
         await asyncio.sleep(time_until_next_check.total_seconds())
         print(f"Checking for updates at {datetime.datetime.now()}")
-        await yt_integration.check_for_new_videos()
+        await yt.check_for_new_videos()
 
 
 async def main():

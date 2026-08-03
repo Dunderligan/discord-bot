@@ -1,6 +1,7 @@
-import requests
 import json
 from datetime import datetime
+
+import requests
 
 YOUTUBE_LINK = "https://youtu.be/ID"
 last_time_checked = datetime.now().astimezone(None)
@@ -22,7 +23,7 @@ class YoutubeIntegration:
         self.callbacks.append(callback)
 
 
-    async def fetch_latest_videos(self, channel_id):
+    def fetch_latest_videos(self, channel_id):
         # Code to fetch the latest videos from the specified channel using YouTube API
         # This should return a list of YoutubeVideo objects
         response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={self.api_key}&channelId={channel_id}&part=snippet,id&order=date&maxResults=8")
@@ -34,7 +35,7 @@ class YoutubeIntegration:
             print("Request was successful")
             # load bytes of response to json
             return json.loads(response.content.decode('utf-8'))
-        print("Request unsuccesful")
+        print("Request unsuccessful")
 
 
     async def check_for_new_videos(self):
