@@ -59,6 +59,7 @@ async def on_ready():
 @tree.command(name="ping", description="Replies with Pong!", guild=discord.Object(id=server_id))
 async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
+    print(f"Received ping command from {interaction.user}")
     await interaction.response.send_message("Pong!")
 
 
