@@ -8,6 +8,7 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
+from modals.checkin import Checkin
 import youtube_integration as yt
 
 load_dotenv()
@@ -17,7 +18,9 @@ yt_token = os.getenv("YOUTUBE_API_KEY")
 yt_channel_id = os.getenv("YOUTUBE_CHANNEL_ID")
 yt_notification_channel_id = os.getenv("YOUTUBE_NOTIFICATION_CHANNEL_ID")
 
-if token is None or server_id is None or yt_token is None or yt_channel_id is None or yt_notification_channel_id is None:
+youtube_activated = False
+
+if token is None or server_id is None or ((yt_token is None or yt_channel_id is None or yt_notification_channel_id is None) and youtube_activated):
     e = "One or more environment variables are missing. Please check your .env file."
     print(f"Error loading environment variables: {e}")
     sys.exit(1)
@@ -59,18 +62,30 @@ async def on_ready():
 @tree.command(name="ping", description="Replies with Pong!", guild=discord.Object(id=server_id))
 async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
+    print(f"Received ping command from {interaction.user}. Replying with Pong!")
     await interaction.response.send_message("Pong!")
+
+
+@tree.command(name="incheck", description="Check in player for current season of Dunderligan", guild=discord.Object(id=server_id))
+async def checkin(interaction: discord.Interaction):
+    """A command that checks in a player for the current season of Dunderligan."""
+    modal = Checkin()
+    try:
+        await interaction.response.send_modal(modal)
+    except Exception as e:
+        print(f"Error occurred while sending modal: {e}")
+        await interaction.followup.send("Du har redan skickat incheckningsformuläret.", ephemeral=True)
 
 
 async def check_updates():
     """Checks for updates on YouTube channel every hour."""
-    while True:
+    while True and youtube_activated:
         # Calculates time until next check at 5 minutes past whole hour
         # 5 past because many videos are published at 12.00, 13.00 etc, and checking them
         # right at the hour might miss them
-        time_until_next_check = datetime.datetime.now().replace(minute=5, second=0, microsecond=0) + datetime.timedelta(hours=1) - datetime.datetime.now()
+        time_until_next_check = datetime.datetime.now(datetime.UTC).replace(minute=5, second=0, microsecond=0) + datetime.timedelta(hours=1) - datetime.datetime.now()
         await asyncio.sleep(time_until_next_check.total_seconds())
-        print(f"Checking for updates at {datetime.datetime.now()}")
+        print(f"Checking for updates at {datetime.datetime.now(datetime.UTC)}")
         await yt.check_for_new_videos()
 
 

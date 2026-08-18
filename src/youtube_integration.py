@@ -28,10 +28,6 @@ class YoutubeIntegration:
         # This should return a list of YoutubeVideo objects
         response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={self.api_key}&channelId={channel_id}&part=snippet,id&order=date&maxResults=8")
         if response.ok:
-            with open("response.json", "+wb") as file:
-                # log content of response
-                file.write(response.content)
-
             print("Request was successful")
             # load bytes of response to json
             return json.loads(response.content.decode('utf-8'))
