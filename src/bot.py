@@ -8,16 +8,19 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
+from checkin import CheckinModal
+
 import youtube_integration as yt
 
 load_dotenv()
 token = os.getenv("TOKEN")
+api_endpoint = os.getenv("API_ENDPOINT")
 server_id: int = int(os.getenv("SERVER_ID"))
 yt_token = os.getenv("YOUTUBE_API_KEY")
 yt_channel_id = os.getenv("YOUTUBE_CHANNEL_ID")
 yt_notification_channel_id = os.getenv("YOUTUBE_NOTIFICATION_CHANNEL_ID")
 
-if token is None or server_id is None or yt_token is None or yt_channel_id is None or yt_notification_channel_id is None:
+if token is None or api_endpoint is None or server_id is None or yt_token is None or yt_channel_id is None or yt_notification_channel_id is None:
     e = "One or more environment variables are missing. Please check your .env file."
     print(f"Error loading environment variables: {e}")
     sys.exit(1)
@@ -61,6 +64,13 @@ async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
     print(f"Received ping command from {interaction.user}")
     await interaction.response.send_message("Pong!")
+
+
+@tree.command(name="checkin", description="Checka in som spelare för denna säsong.", guild=discord.Object(id=server_id))
+async def checkin(interaction: discord.Interaction):
+    """Command to be used by players to check in before each season, confirming they are in the discord server and linking their battletag and discord-ids."""
+    print(f"Recieved checkin command from {interaction.user}")
+    await interaction.response.send_modal(CheckinModal())
 
 
 async def check_updates():
