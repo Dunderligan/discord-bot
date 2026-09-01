@@ -27,6 +27,7 @@ if token is None or api_endpoint is None or server_id is None or yt_token is Non
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True 
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
