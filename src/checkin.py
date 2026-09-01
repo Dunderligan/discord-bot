@@ -147,8 +147,8 @@ async def checkin_player(
     if checkin_response.status_code == 200:
         checkin: CheckinResponse = CheckinResponse.from_json(checkin_response.json())
         member = await interaction.guild.fetch_member(checkin.discord_id)
-        # if member:
-            # await role_and_name_user(member, checkin)
+        if member:
+            await role_and_name_user(member, checkin)
         # TODO Valid checkin should not be ephemeral
         return "Du är nu incheckad för nästa säsong av Dunderligan!"
     return "Fel: Kunde inte hitta battletag."
@@ -160,9 +160,12 @@ async def role_and_name_user(member: discord.Member, checkin: CheckinResponse) -
         nick = f"{checkin.player.battletag} ({next(m for m in checkin.player.memberships if is_player(m)).roster.name})"
         if len(nick) > 32:
             nick = nick[:32]
-        await member.edit(
-            nick=nick
-        )
+        try:
+            await member.edit(
+                nick=nick
+            )
+        except Exception:
+            print(f"Lacking permissions to rename {member.name}")
 
 
 def is_player(membership: Membership) -> bool:
