@@ -1,8 +1,10 @@
-import discord
-import os
-import requests
 import datetime
+import os
 
+import discord
+import requests
+
+import db
 
 current_season_id = "da4f6b34-ca5d-40f2-9810-3bf6bd103ae1"
 # TODO Figure out how to get current season
@@ -135,9 +137,7 @@ async def checkin_player(
     json = {"battletag": battletag}
     url = f"{api_endpoint}/checkin/{current_season_id}/{discord_id}"
     # TODO Store response in database for linking battletags to discord
-    # TODO Hand out team roles, if possible, from database
     # TODO If captain, give captain role
-    # TODO If captain, add battletag and team name in nickname
     checkin_response = requests.post(url=url, json=json, headers=headers)
 
     if checkin_response.status_code == 401:
@@ -155,22 +155,30 @@ async def checkin_player(
 
 
 async def role_and_name_user(member: discord.Member, checkin: CheckinResponse) -> None:
-    if any(m.is_captain for m in checkin.player.memberships):
-        # if captain for any team, rename to 'battletag#0000 (team name)'
-        nick = f"{checkin.player.battletag} ({next(m for m in checkin.player.memberships if is_player(m)).roster.name})"
-        if len(nick) > 32:
-            nick = nick[:32]
-        try:
-            await member.edit(
-                nick=nick
-            )
-        except Exception:
-            print(f"Lacking permissions to rename {member.name}")
+    memberships = (m for m in checkin.player.memberships)
 
+    for m in memberships:
+        team_role = db.get_team_role(m.roster.id)
+        if team_role:
+            try:
+                await member.add_roles(team_role)
+            except discord.Forbidden:
+                print(f"Lacking permissions to add role {team_role.name} to {member.name}")
+        else:
+            print(f"Could not find role for team {m.roster.name}")
+            
+        if m.role in ["coach", "manager"]:
+            continue
 
-def is_player(membership: Membership) -> bool:
-    return membership.role not in ["coach", "manager"]
-
+        if checkin.player.battletag and m.is_captain:
+            nick = f"{checkin.player.battletag}"# ({next(m for m in checkin.player.memberships if is_player(m)).roster.name})"
+            if len(nick) > 32:
+                nick = f"{nick[:31]}."
+            try:
+                await member.edit(nick=nick)
+            except discord.Forbidden:
+                print(f"Lacking permissions to rename {member.name}")
+                
 
 def validate_battletag(battletag: str) -> bool:
     """Returns True if string is on form Name#0000, i.e. a string, #, and number of digits greater than 2 and fewer than 6."""

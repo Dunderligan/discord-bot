@@ -8,9 +8,8 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 
-from checkin import CheckinModal
-
 import youtube_integration as yt
+from checkin import CheckinModal
 
 load_dotenv()
 token = os.getenv("TOKEN")
@@ -28,11 +27,13 @@ if token is None or api_endpoint is None or server_id is None or yt_token is Non
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True 
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+client: discord.Client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client=client)
 
 yt_integration = yt.YoutubeIntegration(yt_token)
 yt_integration.monitor_channel(yt_channel_id)
+
+guild: discord.Guild = discord.Object(id=server_id)
 
 
 @client.event
@@ -54,20 +55,19 @@ async def on_new_videos(videos):
 
 @client.event
 async def on_ready():
-    """Called when the bot is ready."""
+    """Called when the client is ready."""
     print(f"We have logged in as {client.user}")
     yt_integration.add_new_video_callback(on_new_videos)
-    await tree.sync(guild=discord.Object(id=server_id))
 
 
-@tree.command(name="ping", description="Replies with Pong!", guild=discord.Object(id=server_id))
+@tree.command(description="Replies with Pong!", guild=guild)
 async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
     print(f"Received ping command from {interaction.user}")
     await interaction.response.send_message("Pong!")
 
 
-@tree.command(name="checkin", description="Checka in som spelare för denna säsong.", guild=discord.Object(id=server_id))
+@tree.command(description="Checka in som spelare för denna säsong.", guild=guild)
 async def checkin(interaction: discord.Interaction):
     """Command to be used by players to check in before each season, confirming they are in the discord server and linking their battletag and discord-ids."""
     print(f"Recieved checkin command from {interaction.user}")
