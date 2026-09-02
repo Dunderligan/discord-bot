@@ -6,6 +6,7 @@ import sys
 
 import discord
 from discord import app_commands
+from discord.ext import tasks
 from dotenv import load_dotenv
 
 import youtube_integration as yt
@@ -74,21 +75,14 @@ async def checkin(interaction: discord.Interaction):
     await interaction.response.send_modal(CheckinModal())
 
 
-async def check_updates():
-    """Checks for updates on YouTube channel every hour."""
-    while True:
-        # Calculates time until next check at 5 minutes past whole hour
-        # 5 past because many videos are published at 12.00, 13.00 etc, and checking them
-        # right at the hour might miss them
-        time_until_next_check = datetime.datetime.now().replace(minute=5, second=0, microsecond=0) + datetime.timedelta(hours=1) - datetime.datetime.now()
-        await asyncio.sleep(time_until_next_check.total_seconds())
-        print(f"Checking for updates at {datetime.datetime.now()}")
-        await yt.check_for_new_videos()
+@tasks.loop(hours=1)
+async def check_for_videos() -> None:
+    await yt_integration.check_for_new_videos()
 
 
 async def main():
     """Runs client that checks for user-commands and server-side updates in parallell"""
-    await asyncio.gather(client.start(token), check_updates())
+    await asyncio.gather(client.start(token))
 
 
 asyncio.run(main())
