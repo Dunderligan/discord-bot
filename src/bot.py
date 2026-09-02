@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 import youtube_integration as yt
 from checkin import CheckinModal
 
+from config import ConfigCog
+
 load_dotenv()
 token = os.getenv("TOKEN")
 api_endpoint = os.getenv("API_ENDPOINT")
@@ -58,7 +60,9 @@ async def on_new_videos(videos):
 
 async def setup_hook() -> None:
     """Called once when the bot is ready."""
-    await bot.tree.sync(guild=guild)
+    await bot.add_cog(ConfigCog(bot=bot))
+    #await bot.tree.sync(guild=guild)
+    await bot.tree.sync()
     print(f"We have logged in as {bot.user}")
     yt_integration.add_new_video_callback(on_new_videos)
 
