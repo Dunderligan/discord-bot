@@ -6,7 +6,7 @@ import sys
 
 import discord
 from discord import app_commands
-from discord.ext import tasks
+from discord.ext import tasks, commands
 from dotenv import load_dotenv
 
 import youtube_integration as yt
@@ -28,8 +28,10 @@ if token is None or api_endpoint is None or server_id is None or yt_token is Non
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True 
-client: discord.Client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client=client)
+
+bot: commands.Bot = commands.Bot(command_prefix=None, intents=intents)
+#client: discord.Client = discord.Client(intents=intents)
+#tree = app_commands.CommandTree(client=client)
 
 yt_integration = yt.YoutubeIntegration(yt_token)
 yt_integration.monitor_channel(yt_channel_id)
@@ -37,11 +39,11 @@ yt_integration.monitor_channel(yt_channel_id)
 guild: discord.Guild = discord.Object(id=server_id)
 
 
-@client.event
+@bot.event
 async def on_new_videos(videos):
     """Callback function that is called when new videos are detected on the monitored YouTube channel."""
     channel = discord.utils.get(
-        client.get_all_channels(), id=int(yt_notification_channel_id)
+        bot.get_all_channels(), id=int(yt_notification_channel_id)
     )
     if channel is None:
         print(
@@ -54,21 +56,24 @@ async def on_new_videos(videos):
         )
 
 
-@client.event
-async def on_ready():
-    """Called when the client is ready."""
-    print(f"We have logged in as {client.user}")
+async def setup_hook() -> None:
+    """Called once when the bot is ready."""
+    await bot.tree.sync(guild=guild)
+    print(f"We have logged in as {bot.user}")
     yt_integration.add_new_video_callback(on_new_videos)
 
 
-@tree.command(description="Replies with Pong!", guild=guild)
+bot.setup_hook = setup_hook
+
+
+@bot.tree.command(description="Replies with Pong!", guild=guild)
 async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
     print(f"Received ping command from {interaction.user}")
     await interaction.response.send_message("Pong!")
 
 
-@tree.command(description="Checka in som spelare för denna säsong.", guild=guild)
+@bot.tree.command(description="Checka in som spelare för denna säsong.", guild=guild)
 async def checkin(interaction: discord.Interaction):
     """Command to be used by players to check in before each season, confirming they are in the discord server and linking their battletag and discord-ids."""
     print(f"Recieved checkin command from {interaction.user}")
@@ -81,8 +86,8 @@ async def check_for_videos() -> None:
 
 
 async def main():
-    """Runs client that checks for user-commands and server-side updates in parallell"""
-    await asyncio.gather(client.start(token))
+    """Runs bot that checks for user-commands and server-side updates in parallell"""
+    await asyncio.gather(bot.start(token))
 
 
 asyncio.run(main())
