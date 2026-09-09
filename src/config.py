@@ -44,15 +44,14 @@ def save_config(config: Config) -> None:
     with open("config.toml", '+w') as file:
         toml.dump(config, file)
 
-
 class ConfigCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, config: Config):
         self.bot = bot
+        self.config = config
 
     @app_commands.command(name="set_captain_role", description="...")
     @app_commands.describe(role="Roll som kaptener ska bli tilldelade.")
     async def set_captain_role(self, interaction: discord.Interaction, role: discord.Role):
-        await interaction.response.send_message("Waiting for response...")
+        self.config.role_captain = role
+        await interaction.response.send_message(f"Set captain role to <@{role.id}>", ephemeral=True)
 
-
-config: Config = load_config()

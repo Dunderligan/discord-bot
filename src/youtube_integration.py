@@ -1,10 +1,19 @@
 import json
 from datetime import datetime
 
+import os
+import dotenv
 import requests
+from discord.ext import commands, tasks
+import discord
 
 YOUTUBE_LINK = "https://youtu.be/ID"
 last_time_checked = datetime.now().astimezone(None)
+
+dotenv.load_dotenv()
+yt_token = os.getenv("YOUTUBE_API_KEY")
+yt_channel_id = os.getenv("YOUTUBE_CHANNEL_ID")
+yt_notification_channel_id = os.getenv("YOUTUBE_NOTIFICATION_CHANNEL_ID")
 
 class YoutubeIntegration:
     def __init__(self, api_key):
@@ -58,6 +67,9 @@ class YoutubeIntegration:
                 new_videos.append(new_video)
         
         last_time_checked = datetime.now().astimezone(None)
+        if len(new_videos) == 0:
+            return
+        
         for callback in self.callbacks:
             await callback(new_videos)
 
@@ -71,3 +83,37 @@ class YoutubeVideo:
 
     def __str__(self):
         return f"{self.title} ({self.url})"
+
+
+class YoutubeCog(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self.check_for_videos.start()
+        self.youtube_integration = YoutubeIntegration(yt_token)
+        self.youtube_integration.monitor_channel(yt_channel_id)
+        self.youtube_integration.add_new_video_callback(self.on_new_videos)
+
+    @tasks.loop(hours=1)
+    async def check_for_videos(self) -> None:
+        print(f"Checks for videos at {datetime.now().astimezone().isoformat()}")
+        await self.youtube_integration.check_for_new_videos()
+
+    @check_for_videos.before_loop
+    async def before_check(self):
+        print("waiting...")
+        await self.bot.wait_until_ready()
+
+    async def on_new_videos(self, videos):
+        """Callback function that is called when new videos are detected on the monitored YouTube channel."""
+        channel = discord.utils.get(
+            self.bot.get_all_channels(), id=int(yt_notification_channel_id)
+        )
+        if channel is None:
+            print(
+                f"Could not find channel with ID {yt_notification_channel_id}. Please check the ID and try again."
+            )
+            return
+        for video in videos:
+            await channel.send(
+                f"En ny video publicerades precis på Dunderligans kanal: **{video.title}**\n{video.url}"
+            )
