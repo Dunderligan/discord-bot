@@ -6,31 +6,31 @@ from discord import app_commands
 
 
 class Config:
-    id_season: str
-    id_yt_channel: str
-    channel_notifications: discord.TextChannel
-    role_captain: discord.Role
-    role_observer: discord.Role
+    current_season_id: str
+    monitored_yt_channel_ids: list[str]
+    notification_text_channel: discord.TextChannel
+    captain_role: discord.Role
+    observer_role: discord.Role
 
     def __init__(self):
         pass
 
     def to_dict(self) -> dict:
         return {
-            "id_season": self.id_season,
-            "id_yt_channel": self.id_yt_channel,
-            "channel_notifications": self.channel_notifications,
-            "role_captain": self.role_captain,
-            "role_observer": self.role_observer,
+            "current_season_id": self.current_season_id,
+            "monitored_yt_channel_ids": self.monitored_yt_channel_ids,
+            "notification_text_channel": self.notification_text_channel,
+            "captain_role": self.captain_role,
+            "observer_role": self.observer_role,
         }
 
     def from_dict(dict: dict):
         config = Config()
-        config.id_season = dict.get('id_season', None)
-        config.id_yt_channel = dict.get('id_yt_channel', None)
-        config.channel_notifications = dict.get('channel_notifications', None)
-        config.role_captain = dict.get('role_captain', None)
-        config.role_observer = dict.get('role_observer', None)
+        config.current_season_id = dict.get('current_season_id', None)
+        config.monitored_yt_channel_ids = dict.get('monitored_yt_channel_ids', [])
+        config.notification_text_channel = dict.get('notification_text_channel', None)
+        config.captain_role = dict.get('captain_role', None)
+        config.observer_role = dict.get('observer_role', None)
         return config
         
 
@@ -52,13 +52,13 @@ class ConfigCog(commands.Cog):
     @app_commands.command(name="set_captain_role", description="...")
     @app_commands.describe(role="Roll som kaptener ska bli tilldelade.")
     async def set_captain_role(self, interaction: discord.Interaction, role: discord.Role):
-        self.config.role_captain = role
+        self.config.captain_role = role
         save_config(self.config)
         await interaction.response.send_message(f"Set captain role to <@&{role.id}>", ephemeral=True)
 
     @app_commands.command(name="set_notifications_channel", description="...")
     @app_commands.describe(role="Kanal som notiser ska skickas i.")
     async def set_notifications_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        self.config.channel_notifications = channel
+        self.config.notification_text_channel = channel
         save_config(self.config)
         await interaction.response.send_message(f"Set notifications channel to <#{channel.id}>", ephemeral=True)
