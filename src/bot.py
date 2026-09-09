@@ -31,8 +31,10 @@ guild: discord.Guild = discord.Object(id=server_id)
 
 async def setup_hook() -> None:
     """Called once when the bot is ready."""
-    await bot.add_cog(ConfigCog(bot))
-    await bot.add_cog(YoutubeCog(bot))
+    config_cog: ConfigCog = ConfigCog(bot)
+
+    await bot.add_cog(config_cog)
+    await bot.add_cog(YoutubeCog(bot, config_cog.config))
     await bot.tree.sync()
     print(f"We have logged in as {bot.user}")
 
