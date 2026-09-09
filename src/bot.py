@@ -8,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from checkin import CheckinModal
-from config import ConfigCog, load_config
+from config import ConfigCog
 from youtube_integration import YoutubeCog
 
 load_dotenv()
@@ -26,19 +26,13 @@ intents.message_content = True
 intents.members = True 
 
 bot: commands.Bot = commands.Bot(command_prefix=None, intents=intents)
-#client: discord.Client = discord.Client(intents=intents)
-#tree = app_commands.CommandTree(client=client)
-
 guild: discord.Guild = discord.Object(id=server_id)
-
-config = load_config()
 
 
 async def setup_hook() -> None:
     """Called once when the bot is ready."""
-    await bot.add_cog(ConfigCog(bot, config))
+    await bot.add_cog(ConfigCog(bot))
     await bot.add_cog(YoutubeCog(bot))
-    #await bot.tree.sync(guild=guild)
     await bot.tree.sync()
     print(f"We have logged in as {bot.user}")
 

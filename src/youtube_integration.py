@@ -6,6 +6,7 @@ import dotenv
 import requests
 from discord.ext import commands, tasks
 import discord
+from config import Config
 
 YOUTUBE_LINK = "https://youtu.be/ID"
 last_time_checked = datetime.now().astimezone(None)
@@ -86,12 +87,13 @@ class YoutubeVideo:
 
 
 class YoutubeCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, config: Config):
         self.bot = bot
-        self.check_for_videos.start()
+        self.config = config
         self.youtube_integration = YoutubeIntegration(yt_token)
-        self.youtube_integration.monitor_channel(yt_channel_id)
+        self.youtube_integration.monitor_channel(config.id_yt_channel)
         self.youtube_integration.add_new_video_callback(self.on_new_videos)
+        self.check_for_videos.start()
 
     @tasks.loop(hours=1)
     async def check_for_videos(self) -> None:
@@ -106,11 +108,11 @@ class YoutubeCog(commands.Cog):
     async def on_new_videos(self, videos):
         """Callback function that is called when new videos are detected on the monitored YouTube channel."""
         channel = discord.utils.get(
-            self.bot.get_all_channels(), id=int(yt_notification_channel_id)
+            self.bot.get_all_channels(), id=int(self.config.channel_notifications.id)
         )
         if channel is None:
             print(
-                f"Could not find channel with ID {yt_notification_channel_id}. Please check the ID and try again."
+                f"Could not find channel with ID {self.config.channel_notifications.id}. Please check the ID and try again."
             )
             return
         for video in videos:

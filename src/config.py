@@ -37,21 +37,28 @@ class Config:
 
 def load_config() -> Config:
     with open("config.toml", '+r') as file:
-        return toml.load(file)
+        return Config.from_dict(toml.load(file))
 
 
 def save_config(config: Config) -> None:
     with open("config.toml", '+w') as file:
-        toml.dump(config, file)
+        toml.dump(config.to_dict(), file)
 
 class ConfigCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, config: Config):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.config = config
+        self.config = load_config()
 
     @app_commands.command(name="set_captain_role", description="...")
     @app_commands.describe(role="Roll som kaptener ska bli tilldelade.")
     async def set_captain_role(self, interaction: discord.Interaction, role: discord.Role):
         self.config.role_captain = role
-        await interaction.response.send_message(f"Set captain role to <@{role.id}>", ephemeral=True)
+        save_config(self.config)
+        await interaction.response.send_message(f"Set captain role to <@&{role.id}>", ephemeral=True)
 
+    @app_commands.command(name="set_notifications_channel", description="...")
+    @app_commands.describe(role="Kanal som notiser ska skickas i.")
+    async def set_notifications_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        self.config.channel_notifications = channel
+        save_config(self.config)
+        await interaction.response.send_message(f"Set notifications channel to <#{channel.id}>", ephemeral=True)
