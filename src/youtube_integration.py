@@ -107,11 +107,11 @@ class YoutubeCog(commands.Cog):
     async def on_new_videos(self, videos) -> None:
         """Callback function that is called when new videos are detected on the monitored YouTube channel."""
         channel = discord.utils.get(
-            self.bot.get_all_channels(), id=int(self.config.notification_text_channel.id)
+            self.bot.get_all_channels(), id=int(self.config.notification_text_channel_id)
         )
         if channel is None:
             print(
-                f"Error: Could not find channel with ID {self.config.notification_text_channel.id}. Please check the ID and try again."
+                f"Error: Could not find channel with ID {self.config.notification_text_channel_id}. Please check the ID and try again."
             )
             return
         for video in videos:

@@ -2,14 +2,30 @@ import datetime
 import os
 
 import discord
+from discord import app_commands
+from discord.ext import commands
 import requests
 
 import db
+from config import Config
+from models import Player
 
 current_season_id = "da4f6b34-ca5d-40f2-9810-3bf6bd103ae1"
 # TODO Figure out how to get current season
 api_endpoint = os.getenv("API_ENDPOINT")
 api_key = os.getenv("API_KEY")
+
+
+class CheckinCog(commands.Cog):
+    def __init__(self, bot: commands.Bot, config: Config):
+        self.bot = bot
+        self.config = config
+
+    @app_commands.command(name="checkin", description="Check in as a player to the next season.")
+    async def checkin(interaction: discord.Interaction):
+        """Command to be used by players to check in before each season, confirming they are in the discord server and linking their battletag and discord-ids."""
+        print(f"Recieved checkin command from {interaction.user}")
+        await interaction.response.send_modal(CheckinModal())
 
 
 class CheckinModal(discord.ui.Modal, title="Incheckning"):
@@ -29,77 +45,6 @@ class CheckinModal(discord.ui.Modal, title="Incheckning"):
         )
         print(
             f"Error occurred when user {interaction.user.global_name} tried checking in: {error}"
-        )
-
-
-class Roster:
-    id: str
-    name: str
-    slug: str
-
-    def __init__(self, id: str, name: str, slug: str):
-        self.id = id
-        self.name = name
-        self.slug = slug
-
-    def from_json(json: dict):
-        return Roster(json.get("id"), json.get("name"), json.get("slug"))
-
-
-class Membership:
-    rank: str
-    tier: int
-    sr: int
-    is_captain: bool
-    registered_name: str
-    roster: Roster
-    role: str
-
-    def __init__(
-        self,
-        rank: str,
-        tier: int,
-        sr: int,
-        is_captain: bool,
-        registered_name: str,
-        roster: Roster,
-        role: str,
-    ):
-        self.rank = rank
-        self.tier = tier
-        self.sr = sr
-        self.is_captain = is_captain
-        self.registered_name = registered_name
-        self.roster = roster
-        self.role = role
-
-    def from_json(json: dict):
-        return Membership(
-            json.get("rank"),
-            json.get("tier"),
-            json.get("sr"),
-            json.get("isCaptain"),
-            json.get("registeredName"),
-            Roster.from_json(json.get("roster")),
-            json.get("role"),
-        )
-
-
-class Player:
-    id: str
-    battletag: str
-    memberships: list[Membership]
-
-    def __init__(self, id: str, battletag: str, memberships: list[Membership]):
-        self.id = id
-        self.battletag = battletag
-        self.memberships = memberships
-
-    def from_json(json: dict):
-        return Player(
-            json.get("id"),
-            json.get("battletag"),
-            [Membership.from_json(m) for m in json.get("memberships")],
         )
 
 
@@ -157,13 +102,12 @@ async def checkin_player(
 async def role_and_name_user(member: discord.Member, checkin: CheckinResponse) -> None:
     memberships = (m for m in checkin.player.memberships)
 
+    roles_to_add: list[discord.Role] = []
+
     for m in memberships:
         team_role = db.get_team_role(m.roster.id)
         if team_role:
-            try:
-                await member.add_roles(team_role)
-            except discord.Forbidden:
-                print(f"Lacking permissions to add role {team_role.name} to {member.name}")
+            roles_to_add.append(team_role)
         else:
             print(f"Could not find role for team {m.roster.name}")
             
@@ -178,6 +122,11 @@ async def role_and_name_user(member: discord.Member, checkin: CheckinResponse) -
                 await member.edit(nick=nick)
             except discord.Forbidden:
                 print(f"Lacking permissions to rename {member.name}")
+    try: 
+        await member.add_roles(roles_to_add)
+    except discord.Forbidden:
+        print(f"Lacking permissions to add roles to user {member.name}")
+            
                 
 
 def validate_battletag(battletag: str) -> bool:
