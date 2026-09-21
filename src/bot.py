@@ -7,13 +7,15 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from checkin import CheckinModal
-from config import ConfigCog
+from checkin import CheckinCog
+from network import Network
+from config import Config, ConfigCog, load_config
 from youtube_integration import YoutubeCog
 
 load_dotenv()
 token = os.getenv("TOKEN")
 api_endpoint = os.getenv("API_ENDPOINT")
+api_key = os.getenv("API_KEY")
 server_id: int = int(os.getenv("SERVER_ID"))
 
 if token is None or api_endpoint is None or server_id is None:
@@ -31,10 +33,17 @@ guild: discord.Guild = discord.Object(id=server_id)
 
 async def setup_hook() -> None:
     """Called once when the bot is ready."""
-    config_cog: ConfigCog = ConfigCog(bot)
+    config: Config = load_config()
+    network: Network = Network(api_endpoint, api_key)
+    
+    network_cogs = [CheckinCog]
+    for c in network_cogs:
+        await bot.add_cog(c(bot, config, network))
 
-    await bot.add_cog(config_cog)
-    await bot.add_cog(YoutubeCog(bot, config_cog.config))
+    other_cogs = [ConfigCog, YoutubeCog]
+    for c in other_cogs:
+        await bot.add_cog(c(bot, config))
+
     await bot.tree.sync()
     print(f"We have logged in as {bot.user}")
 
@@ -47,13 +56,6 @@ async def ping(interaction: discord.Interaction):
     """A simple command that replies with Pong! when the user types /ping."""
     print(f"Received ping command from {interaction.user}")
     await interaction.response.send_message("Pong!")
-
-
-@bot.tree.command(description="Checka in som spelare för denna säsong.", guild=guild)
-async def checkin(interaction: discord.Interaction):
-    """Command to be used by players to check in before each season, confirming they are in the discord server and linking their battletag and discord-ids."""
-    print(f"Recieved checkin command from {interaction.user}")
-    await interaction.response.send_modal(CheckinModal())
 
 
 async def main():

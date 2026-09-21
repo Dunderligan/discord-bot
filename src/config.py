@@ -1,8 +1,7 @@
 import discord
 import toml
-
-from discord.ext import commands
 from discord import app_commands
+from discord.ext import commands
 
 
 class Config:
@@ -44,9 +43,9 @@ def save_config(config: Config) -> None:
 
 
 class ConfigCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot, config: Config):
         self.bot = bot
-        self.config = load_config()
+        self.config = config
 
     @app_commands.command(name="set_captain_role", description="...")
     @app_commands.describe(role="Roll som kaptener ska bli tilldelade.")
@@ -56,7 +55,7 @@ class ConfigCog(commands.Cog):
         await interaction.response.send_message(f"Set captain role to <@&{role.id}>", ephemeral=True)
 
     @app_commands.command(name="set_notifications_channel", description="...")
-    @app_commands.describe(role="Kanal som notiser ska skickas i.")
+    @app_commands.describe(channel="Kanal som notiser ska skickas i.")
     async def set_notifications_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         self.config.notification_text_channel_id = channel.id
         save_config(self.config)
