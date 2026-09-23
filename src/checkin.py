@@ -98,6 +98,8 @@ class CheckinCog(commands.Cog):
                 await interaction.response.send_message("FEL: Spelare är redan incheckad. Om det är ett misstag, kontakta admin.", ephemeral=True)
             elif e.response.status_code == 401:
                 await interaction.response.send_message("FEL: API-nyckel är ogiltig. Kontakta admin.", ephemeral=True)
+            elif e.response.status_code == 404:
+                await interaction.response.send_message("FEL: Battletag hittades inte. Dubbel-kolla att du skrev den fulla battletagen.", ephemeral=True)
             else:
                 await interaction.response.send_message("FEL: Kontakta admin.", ephemeral=True)
 
