@@ -77,6 +77,7 @@ class CheckinCog(commands.Cog):
         current_season_id = self.config.current_season_id
 
         json = {"battletag": battletag}
+        print(json)
         # TODO Store response in database for linking battletags to discord
         # TODO If captain, give captain role
         try:
@@ -123,6 +124,8 @@ class CheckinCog(commands.Cog):
                     await member.edit(nick=nick)
                 except discord.Forbidden:
                     print(f"Lacking permissions to rename {member.name}")
+        if len(roles_to_add) == 0:
+            return
         try: 
             await member.add_roles(roles_to_add)
         except discord.Forbidden:

@@ -12,7 +12,8 @@ class Network:
             a response object with a defined from_json function.
         """
         headers = {"Authorization": f"Bearer {self.api_key}"}
-        url = f"{self.api_endpoint}{endpoint}"
+        url = f"{self.api_endpoint}/{endpoint}"
+        print(f"Sending request to {url}")
 
         response: requests.Response
 
@@ -24,5 +25,5 @@ class Network:
             print(f"ERROR: Missing support for method: {method}")
 
         if response.status_code == 200:
-            return response_type.from_json(response.json)
+            return response_type.from_json(response.json())
         response.raise_for_status()
