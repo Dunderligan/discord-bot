@@ -77,9 +77,7 @@ class CheckinCog(commands.Cog):
         current_season_id = self.config.current_season_id
 
         json = {"battletag": battletag}
-        print(json)
         # TODO Store response in database for linking battletags to discord
-        # TODO If captain, give captain role
         try:
             response: CheckinResponse = self.network.request(
                 f"checkin/{current_season_id}/{discord_id}",
@@ -89,8 +87,7 @@ class CheckinCog(commands.Cog):
             )
             member = await interaction.guild.fetch_member(response.discord_id)
             if member:
-                await self.role_and_name_user(member, response)
-            # TODO Valid checkin should not be ephemeral
+                await self.role_and_name_user(interaction.guild, member, response)
             await interaction.response.send_message("Du är nu incheckad, välkommen till Dunderligan!", ephemeral=True)
         except HTTPError as e:
             print(f"Error: {interaction.user.global_name} got error code {e.response.status_code} with json {e.response.content} when trying to check in.")
@@ -103,7 +100,7 @@ class CheckinCog(commands.Cog):
             else:
                 await interaction.response.send_message("FEL: Kontakta admin.", ephemeral=True)
 
-    async def role_and_name_user(self, member: discord.Member, checkin: CheckinResponse) -> None:
+    async def role_and_name_user(self, guild: discord.Guild, member: discord.Member, checkin: CheckinResponse) -> None:
         memberships = (m for m in checkin.player.memberships)
 
         roles_to_add: list[discord.Role] = []
@@ -119,7 +116,15 @@ class CheckinCog(commands.Cog):
                 continue
 
             if checkin.player.battletag and m.is_captain:
-                nick = f"{checkin.player.battletag}"# ({next(m for m in checkin.player.memberships if is_player(m)).roster.name})"
+                captain_role: discord.Role = discord.utils.get(
+                    guild.roles, id=int(self.config.captain_role_id)
+                )
+                if captain_role and captain_role not in roles_to_add:
+                    roles_to_add.append(captain_role)
+                else:
+                    print("Couldn't find captain role, or it was already added to list.")
+
+                nick = f"{checkin.player.battletag}"
                 if len(nick) > 32:
                     nick = f"{nick[:31]}."
                 try:
@@ -129,7 +134,7 @@ class CheckinCog(commands.Cog):
         if len(roles_to_add) == 0:
             return
         try: 
-            await member.add_roles(roles_to_add)
+            await member.add_roles(*roles_to_add)
         except discord.Forbidden:
             print(f"Lacking permissions to add roles to user {member.name}")
             

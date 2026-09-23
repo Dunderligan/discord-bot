@@ -1,17 +1,16 @@
+from dataclasses import dataclass
+
+
+@dataclass
 class Roster:
     id: str
     name: str
     slug: str
 
-    def __init__(self, id: str, name: str, slug: str):
-        self.id = id
-        self.name = name
-        self.slug = slug
-
     def from_json(json: dict):
         return Roster(json.get("id"), json.get("name"), json.get("slug"))
 
-
+@dataclass
 class Membership:
     rank: str
     tier: int
@@ -20,24 +19,6 @@ class Membership:
     registered_name: str
     roster: Roster
     role: str
-
-    def __init__(
-        self,
-        rank: str,
-        tier: int,
-        sr: int,
-        is_captain: bool,
-        registered_name: str,
-        roster: Roster,
-        role: str,
-    ):
-        self.rank = rank
-        self.tier = tier
-        self.sr = sr
-        self.is_captain = is_captain
-        self.registered_name = registered_name
-        self.roster = roster
-        self.role = role
 
     def from_json(json: dict):
         return Membership(
@@ -50,16 +31,11 @@ class Membership:
             json.get("role"),
         )
 
-
+@dataclass
 class Player:
     id: str
     battletag: str
     memberships: list[Membership]
-
-    def __init__(self, id: str, battletag: str, memberships: list[Membership]):
-        self.id = id
-        self.battletag = battletag
-        self.memberships = memberships
 
     def from_json(json: dict):
         return Player(
