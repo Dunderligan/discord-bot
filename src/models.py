@@ -10,6 +10,7 @@ class Roster:
     def from_json(json: dict):
         return Roster(json.get("id"), json.get("name"), json.get("slug"))
 
+
 @dataclass
 class Membership:
     rank: str
@@ -30,6 +31,7 @@ class Membership:
             Roster.from_json(json.get("roster")),
             json.get("role"),
         )
+
 
 @dataclass
 class Player:
