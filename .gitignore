@@ -182,6 +182,7 @@ cython_debug/
 /bot-env
 
 # Local data for bot
-pseudocode.md
-database.db
-response.json
+.md
+.db
+.json
+.toml

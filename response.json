@@ -1,0 +1,284 @@
+{
+  "kind": "youtube#searchListResponse",
+  "etag": "PAAbGF73XMcGD7VW1xwjb2sGCnc",
+  "nextPageToken": "CAgQAA",
+  "regionCode": "SE",
+  "pageInfo": {
+    "totalResults": 80,
+    "resultsPerPage": 8
+  },
+  "items": [
+    {
+      "kind": "youtube#searchResult",
+      "etag": "K6XKxCqUYfKtEZ9DLOmhPSHTB5k",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "BzeURqFJ-aM"
+      },
+      "snippet": {
+        "publishedAt": "2026-05-10T16:00:19Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "Bagär vs. TreTvåEtt [DS FINAL - Säsong 8]",
+        "description": "Bagär vs. TreTvåEtt Dunderserien FINAL, Dunderligan Säsong 8 Casters: EgomorphX & Slem Dunderligan är Sveriges största ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/BzeURqFJ-aM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/BzeURqFJ-aM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/BzeURqFJ-aM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-05-10T16:00:19Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "wPQFgyzjPNmS_e5w6iZGAucuynA",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "Thw2Zgn4k9I"
+      },
+      "snippet": {
+        "publishedAt": "2026-05-08T10:01:00Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "Showmatch [Div5 Showmatch - Säsong 8]",
+        "description": "Jordgubbarna vs. Hallonen Division 5 Showmatch, Dunderligan Säsong 8 Casters: EgomorphX & GHJ Produktion: Origo ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/Thw2Zgn4k9I/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/Thw2Zgn4k9I/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/Thw2Zgn4k9I/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-05-08T10:01:00Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "yL-1-1i-WZ07H6_ko1MNPMoxcOo",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "t-KI8OPKBmk"
+      },
+      "snippet": {
+        "publishedAt": "2026-05-06T17:01:17Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "[S8E3] Podcast Ligasnack: Slutspel, Finaler, Awards och Hall of Fame!",
+        "description": "Adrian och Njukas summerar slutspelen samt delar ut awards och Hall of Fame. Diskuterar hur ligan har känts och lite intressanta ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/t-KI8OPKBmk/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/t-KI8OPKBmk/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/t-KI8OPKBmk/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-05-06T17:01:17Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "lRwk8kzzMhYxZmRXPnOX78JHZrg",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "cKdswEm8X_A"
+      },
+      "snippet": {
+        "publishedAt": "2026-05-01T15:01:08Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "Gänget utan Albin vs. Equador Games [Div1 FINAL - Säsong 8]",
+        "description": "Gänget utan Albin vs. Equador Games Division 1 FINAL, Dunderligan Säsong 8 Casters: Koloma & BatCatBex Dunderligan är ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/cKdswEm8X_A/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/cKdswEm8X_A/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/cKdswEm8X_A/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-05-01T15:01:08Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "H6vtSd4YXe9yXkNgE_2TdmdDdI8",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "UcjznBqwZss"
+      },
+      "snippet": {
+        "publishedAt": "2026-04-26T09:00:42Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "PandaBuyBoys vs. Luhbonka [Div2 Semifinal - Säsong 8]",
+        "description": "PandaBuyBoys vs. Luhbonka Division 2 Semifinal, Dunderligan Säsong 8 Casters: Njukas & Kejno Dunderligan är Sveriges ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/UcjznBqwZss/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/UcjznBqwZss/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/UcjznBqwZss/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-04-26T09:00:42Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "sIqcaisC8d0OCHpdw6ztz9L28ZY",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "mx75EObeUbM"
+      },
+      "snippet": {
+        "publishedAt": "2026-04-24T11:01:19Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "Cool Sharks vs. DAFSH [Div4 Kvartsfinal - Säsong 8]",
+        "description": "Cool Sharks vs. DAFSH Division 4 Kvartsfinal, Dunderligan Säsong 8 Casters: Frallex Dunderligan är Sveriges största ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/mx75EObeUbM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/mx75EObeUbM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/mx75EObeUbM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-04-24T11:01:19Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "7M2Er7VWcWny_5msRt4OdGBDbuk",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "R4Gi2VgQ6n8"
+      },
+      "snippet": {
+        "publishedAt": "2026-04-23T09:00:41Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "Mithril vs. Tank Players Only [Div1 Kvartsfinal - Säsong 8]",
+        "description": "Mithril vs. Tank Players Only Division 1 Kvartsfinal, Dunderligan Säsong 8 Casters: Njukas & Kejno Dunderligan är Sveriges ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/R4Gi2VgQ6n8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/R4Gi2VgQ6n8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/R4Gi2VgQ6n8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-04-23T09:00:41Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "W3J6WZpXBR83r0S33piy_IWuoyU",
+      "id": {
+        "kind": "youtube#video",
+        "videoId": "JhRMDGh66B0"
+      },
+      "snippet": {
+        "publishedAt": "2026-04-22T13:00:27Z",
+        "channelId": "UC0i3dCvQj0LvzJchNq-84OA",
+        "title": "Bagär vs. Grabbarna som Gråter [DS Kvartsfinal - Säsong 8]",
+        "description": "Bagär vs. Grabbarna som Gråter Dunderserien Kvartsfinal, Dunderligan Säsong 8 Casters: Origo & Baxter Dunderligan är ...",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/JhRMDGh66B0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/JhRMDGh66B0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/JhRMDGh66B0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Dunderligan",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-04-22T13:00:27Z"
+      }
+    }
+  ]
+}
