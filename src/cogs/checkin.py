@@ -6,8 +6,8 @@ from discord.ext import commands
 from network import Network
 from requests import HTTPError
 
-import db
-from config import Config
+import db_abstraction
+from cogs.config import Config
 from models import Player
 
 
@@ -53,10 +53,11 @@ class CheckinResponse:
 
 
 class CheckinCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, config: Config, network: Network):
+    def __init__(self, bot: commands.Bot, config: Config, network: Network, db: db_abstraction.DatabaseAbstraction):
         self.bot = bot
         self.config = config
         self.network = network
+        self.db = db
 
     @app_commands.command(name="checkin", description="Check in as a player to the next season.")
     async def checkin(self, interaction: discord.Interaction):
@@ -106,7 +107,7 @@ class CheckinCog(commands.Cog):
         roles_to_add: list[discord.Role] = []
 
         for m in memberships:
-            team_role = db.get_team_role(m.roster.id)
+            team_role = self.db.get_team_role(m.roster.id)
             if team_role:
                 roles_to_add.append(team_role)
             else:
@@ -122,7 +123,10 @@ class CheckinCog(commands.Cog):
                 if captain_role and captain_role not in roles_to_add:
                     roles_to_add.append(captain_role)
                 else:
-                    print("Couldn't find captain role, or it was already added to list.")
+                    if captain_role in roles_to_add:
+                        print("Captain role already added to list.")
+                    else:    
+                        print("Couldn't find captain role.")
 
                 nick = f"{checkin.player.battletag}"
                 if len(nick) > 32:

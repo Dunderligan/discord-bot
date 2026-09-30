@@ -7,10 +7,12 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from checkin import CheckinCog
+from cogs.checkin import CheckinCog
 from network import Network
-from config import Config, ConfigCog, load_config
-from youtube_integration import YoutubeCog
+from cogs.config import Config, ConfigCog, load_config
+from cogs.youtube_integration import YoutubeCog
+import db_abstraction
+
 
 load_dotenv()
 token = os.getenv("TOKEN")
@@ -35,10 +37,11 @@ async def setup_hook() -> None:
     """Called once when the bot is ready."""
     config: Config = load_config()
     network: Network = Network(api_endpoint, api_key)
+    db: db_abstraction.DatabaseAbstraction = db_abstraction.DatabaseAbstraction()
     
     network_cogs = [CheckinCog]
     for c in network_cogs:
-        await bot.add_cog(c(bot, config, network))
+        await bot.add_cog(c(bot, config, network, db))
 
     other_cogs = [ConfigCog, YoutubeCog]
     for c in other_cogs:

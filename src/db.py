@@ -1,9 +1,6 @@
 import sqlite3
-from datetime import datetime
-
 from dataclasses import dataclass
-
-import discord
+from datetime import datetime
 
 
 @dataclass
@@ -36,6 +33,15 @@ class LinkedUser:
     checked_in: bool
 
 
+# The preset list of existing discord objects
+DISCORD_OBJECTS = [
+    DiscordObject(0, "role"),
+    DiscordObject(1, "category"),
+    DiscordObject(2, "text_channel"),
+    DiscordObject(3, "voice_channel"),
+]
+
+
 class Connection:
     connection: sqlite3.Connection
 
@@ -47,9 +53,8 @@ class Connection:
         return self.connection.cursor()
 
     def create_tables(self):
-        try:
-            cursor = self.connection.cursor()
-            cursor.executescript("""
+        cursor = self.connection.cursor()
+        cursor.executescript("""
             BEGIN;
             CREATE table IF NOT EXISTS discord_object (
                 id INTEGER PRIMARY KEY,
@@ -73,49 +78,50 @@ class Connection:
             );
             COMMIT;
             """)
-        except Exception as e:
-            print(e)
+        self.insert_discord_objects(DISCORD_OBJECTS)
 
     def insert_discord_objects(self, obj_list: list[DiscordObject]) -> None:
         cursor = self.create_cursor()
         cursor.executemany(
-            "INSERT INTO discord_object (id, type) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO discord_object (id, type) VALUES (?, ?)",
             [(obj.id, obj.type) for obj in obj_list],
         )
+        self.connection.commit()
 
     def insert_created_object(self, obj: CreatedObject) -> None:
         cursor = self.create_cursor()
-        type_id = cursor.execute(
-            "SELECT id FROM discord_object WHERE type = ?",
-            (obj.type,)
-        )
         cursor.execute(
             "INSERT INTO created_object (id, type_id, season_id, division_id, team_id) VALUES (?, ?, ?, ?, ?)",
-            ({obj.id}, {type_id}, {obj.season_id}, {obj.division_id}, {obj.team_id}),
+            (obj.id, obj.type.id, obj.season_id, obj.division_id, obj.team_id),
         )
+        self.connection.commit()
 
     def insert_linked_user(self, user: LinkedUser) -> None:
         cursor = self.create_cursor()
         cursor.execute(
             "INSERT INTO linked_user (discord_id, player_id, battletag, linked_at, checked_in) VALUES (?, ?, ?, ?, ?)",
             (
-                {user.discord_id},
-                {user.player_id},
-                {user.battletag},
-                {user.linked_at},
-                {user.checked_in},
+                user.discord_id,
+                user.player_id,
+                user.battletag,
+                user.linked_at,
+                user.checked_in,
             ),
         )
+        self.connection.commit()
 
-    def fetch_discord_object(self, type: str) -> DiscordObject:
+    def fetch_discord_object(self, type: str | None = None, type_id: int | None = None) -> DiscordObject:
         cursor = self.create_cursor()
-        cursor.execute("SELECT id FROM discord_object WHERE type = ?", (type,))
+        if type:
+            cursor.execute("SELECT id FROM discord_object WHERE type = ?", (type,))
+        if type_id:
+            cursor.execute("SELECT id FROM discord_object WHERE id = ?", (type_id,))
         discord_obj = cursor.fetchone()
         if not discord_obj:
-            raise sqlite3.DatabaseError
+            raise sqlite3.DatabaseError(f"Couldn't find discord_object of type {type}")
         return DISCORD_OBJECTS[discord_obj[0]]
 
-    def fetch_created_object(self, type_id: int, season_id: str, division_id: str = "", team_id: str = ""):
+    def fetch_created_object(self, type_id: int, season_id: str, division_id: str | None = None, team_id: str | None = None):
         cursor = self.create_cursor()
         sql_query = "SELECT * FROM created_object WHERE type_id = ? AND season_id = ?"
         parameters = [type_id, season_id]
@@ -126,64 +132,11 @@ class Connection:
             sql_query += " AND team_id = ?"
             parameters.append(team_id)
         cursor.execute(sql_query, parameters)
-        obj = cursor.fetchone()
-        if not obj:
-            raise sqlite3.DatabaseError
-        type = self.fetch_discord_object(obj[1])
+        obj = cursor.fetchall()
+        if len(obj) > 1:
+            raise sqlite3.DatabaseError(f"Found too many created objects with sql {sql_query}")
+        elif not obj:
+            raise sqlite3.DatabaseError(f"Couldn't find created object with sql {sql_query}")
+        obj = obj[0]
+        type = self.fetch_discord_object(type_id=obj[1])
         return CreatedObject(obj[0], type, obj[2], obj[3], obj[4])
-
-def get_team_role(team_id: str) -> discord.Role | None:
-    return None
-
-
-DISCORD_OBJECTS = [
-    DiscordObject(0, "role"),
-    DiscordObject(1, "category"),
-    DiscordObject(2, "text_channel"),
-    DiscordObject(3, "voice_channel"),
-]
-
-
-"""
-table 1: 'Discord objects'
-id: int | type: str
-
-Constant table containing type of objects that can be created and stored in 'table 2'
-Instantiated once, kept constantly
-"""
-
-
-"""
-table 2: 'Created objects'
-id: int | type: DiscordObject | season_id: str | division_id: str | team_id: str
-
-Table containing created objects. Primary purpose is to keep track of created objects so they can be removed in the future.
-
-When creating objects, order will probably go:
-Roles -> Categories [roles are retrieved] -> Channels [roles are retrieved]
-But since we keep track of season, division, and team, we can also go in any other order, although that might be more inefficient and less clear.
-
-Admins can run a command setting up the current season; When setup they will choose if they want to clear the old season, and then they have to confirm
-The setup command will take a while and might run into errors along the way. Because of that, the command should insert values into the database as soon as possible,
-    but only commit changes as 'finally:'.
-
-When objects are removed in the future, their record should also be cleared. There will be a way to clear all objects, as well as everything except the current season.
-"""
-
-
-"""
-table 3: 'Linked users'
-discord_id: int | member_id: str | battletag: str | linked_at: date | currently_checked_in: bool
-
-Table keeping track of users that have 'linked' their discord and battletags together. The purpose is for the bot to be able to keep track of which discord user belongs to which team,
-so for future functionality such as booking matches, removing information from direct messages, and simplifying contacting players. The first time a player checks in,
-their new 'LinkedUser' should be added to the table. The record is then kept forever, or until the user has to switch their discord_id or battletag, in that case
-an admin removes the connection using an admin command.
-
-When checkin for a new season starts, all existing 'LinkedUsers' should have their currently_checked_in variable set to false, When they check in, it should be set to true.
-The purpose is 
-"""
-
-connection = Connection("test.db")
-connection.insert_discord_objects(DISCORD_OBJECTS)
-print(connection.fetch_discord_object("category"))

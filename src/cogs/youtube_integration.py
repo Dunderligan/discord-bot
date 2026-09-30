@@ -6,7 +6,7 @@ import dotenv
 import requests
 from discord.ext import commands, tasks
 import discord
-from config import Config
+from cogs.config import Config
 
 YOUTUBE_LINK = "https://youtu.be/ID"
 last_time_checked = datetime.now().astimezone(None)
