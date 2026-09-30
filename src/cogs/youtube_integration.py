@@ -88,8 +88,9 @@ class YoutubeCog(commands.Cog):
         self.config = config
         self.youtube_integration = YoutubeIntegration(yt_token)
 
-        for c in config.monitored_yt_channel_ids:
-            self.youtube_integration.monitor_channel(c)
+        if config.monitored_yt_channel_ids:
+            for c in config.monitored_yt_channel_ids:
+                self.youtube_integration.monitor_channel(c)
 
         self.youtube_integration.add_new_video_callback(self.on_new_videos)
         self.check_for_videos.start()

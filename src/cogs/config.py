@@ -33,8 +33,13 @@ class Config:
 
 
 def load_config() -> Config:
-    with open("config.toml", 'r') as file:
-        return Config.from_dict(toml.load(file))
+    try:
+        with open("config.toml", 'r') as file:
+            return Config.from_dict(toml.load(file))
+    except FileNotFoundError:
+        print("Config file was not found.")
+        return Config()
+
 
 
 def save_config(config: Config) -> None:
