@@ -66,7 +66,7 @@ class SetupModal(discord.ui.Modal, title="Skapa kanaler"):
 
     async def on_submit(self, interaction: discord.Interaction):
         await self.callback(
-            interaction,
+            interaction.guild,
             filter(lambda s: s.id == self.season.values[0], self.seasons)[0],
         )
 
@@ -93,17 +93,17 @@ class SetupCog(commands.Cog):
         description="Creates roles, categories, and channels for the divisions and teams belonging to season.",
     )
     async def setup_channels(self, interaction: Interaction):
-        no_of_created_objects: int = 0
-
         try:
             await interaction.response.send_modal(
-                SetupModal(generate_season, self.api.get_seasons())
+                SetupModal(self.generate_season, self.api.get_seasons())
             )
         except Exception as e:
             print(e)
 
     async def generate_season(self, guild: Guild, season: Season):
         await self.clear_old_objects(guild)
+        for division in season.divisions:
+            await generate_division(guild, division, season)
 
     async def clear_old_objects(self, guild: Guild) -> None:
         objs: list[CreatedObject] = self.db.get_created_objects()
@@ -142,15 +142,19 @@ async def create_channel(
     )
 
 
-async def generate_season(interaction: Interaction, season: Season) -> None:
-    for division in season.divisions:
-        await generate_division(interaction, division)
+async def generate_division(guild: Guild, division: Division, season: Season) -> None:
+    div_cat = await create_category(guild, f"{season.name} - {division.name}", {})
+    short_div = "div" + division.slug if division.slug.isdigit() else "ds" if division.slug == "dunderserien" else "???"
+    suffix = f"{short_div}-{season.slug[0]}{season.slug[-1]}"
+
+    channels = ["spelschema", "tabell", "information", "spelartrupper", "rapportera-bans"]
+    for c in channels:
+        await create_channel(guild, f"{c}-{suffix}", div_cat, {})
+
+    for group in division.groups:
+        for roster in group.rosters:
+            pass
 
 
-async def generate_division(interaction: Interaction, division: Division) -> None:
-    for roster in [g for g in division.groups]:
-        pass
-
-
-async def generate_team_channels(interaction: Interaction, roster: Roster) -> None:
+async def generate_team_channels(guild: Guild, roster: Roster) -> None:
     pass
