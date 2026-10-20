@@ -185,3 +185,4 @@ cython_debug/
 *.db
 response.json
 config.toml
+*.md

@@ -112,9 +112,9 @@ class Connection:
 
     def fetch_discord_object(self, type: str | None = None, type_id: int | None = None) -> DiscordObject:
         cursor = self.create_cursor()
-        if type:
+        if not type is None:
             cursor.execute("SELECT id FROM discord_object WHERE type = ?", (type,))
-        if type_id:
+        if not type_id is None:
             cursor.execute("SELECT id FROM discord_object WHERE id = ?", (type_id,))
         discord_obj = cursor.fetchone()
         if not discord_obj:

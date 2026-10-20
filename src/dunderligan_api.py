@@ -41,9 +41,9 @@ class DivisionResponse:
 
 
 class DunderliganAPI:
-    def __init__(self, configuration):
+    def __init__(self, api_endpoint: str, api_key: str):
         self.network: Network = Network(
-            configuration.api_endpoint, configuration.api_key
+            api_endpoint, api_key
         )
 
     def checkin_player(

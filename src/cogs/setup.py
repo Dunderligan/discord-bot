@@ -100,12 +100,11 @@ class SetupCog(commands.Cog):
         except Exception as e:
             print(e)
 
-    async def generate_season(season: Season):
+    async def generate_season(self, guild: Guild, season: Season):
+        await self.clear_old_objects(guild)
+
+    async def clear_old_objects(self, guild: Guild) -> None:
         pass
-
-
-async def clear_old_objects(guild: Guild) -> None:
-    pass
 
 
 async def create_role(guild: Guild, name: str) -> Role:

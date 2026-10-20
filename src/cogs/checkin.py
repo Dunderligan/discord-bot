@@ -76,11 +76,15 @@ class CheckinCog(commands.Cog):
         roles_to_add: list[discord.Role] = []
 
         for m in memberships:
-            team_role = self.db.get_team_role(m.roster.id)
-            if team_role:
-                roles_to_add.append(team_role)
+            team_role_id = self.db.get_team_role_id(m.roster.id)
+            if team_role_id:
+                team_role = discord.utils.get(guild.roles, id=team_role_id)
+                if team_role:
+                    roles_to_add.append(team_role)
+                else:
+                    print(f"Could not find role for team {m.roster.name}")
             else:
-                print(f"Could not find role for team {m.roster.name}")
+                print(f"Database doesn't contain role for team {m.roster.name}")
                 
             if m.role in ["coach", "manager"]:
                 continue

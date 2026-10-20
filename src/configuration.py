@@ -13,6 +13,7 @@ class Configuration:
     api_endpoint: str
     api_key: str
     server_id: int
+    db_path: str
     yt_api_key: str
 
     def __init__(self):
@@ -21,8 +22,9 @@ class Configuration:
         self.api_endpoint = getenv("API_ENDPOINT")
         self.api_key = getenv("API_KEY")
         self.server_id = int(getenv("SERVER_ID"))
+        self.db_path = getenv("DATABASE_PATH")
 
-        if self.token is None or self.api_endpoint is None or self.api_key is None or self.server_id is None:
+        if self.token is None or self.api_endpoint is None or self.api_key is None or self.server_id is None or self.db_path is None:
             e = "One or more environment variables are missing. Please check your .env file."
             print(f"Error loading environment variables: {e}")
             exit(1)
@@ -37,7 +39,7 @@ class Suite:
     bot: Bot
 
     def __init__(self, configuration: Configuration, bot: Bot):
-        self.db = DatabaseAbstraction()
-        self.api = DunderliganAPI(configuration)
+        self.db = DatabaseAbstraction(configuration.db_path)
+        self.api = DunderliganAPI(configuration.api_endpoint, configuration.api_key)
         self.configuration = configuration
         self.bot = bot
