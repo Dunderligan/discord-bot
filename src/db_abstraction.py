@@ -15,3 +15,9 @@ class DatabaseAbstraction:
             print(f"Couldn't find role with season_id {season_id} and team_id {team_id}")
             return None
         return role.id
+
+    def get_created_objects(self):
+        return self.connection.fetch_all_created_objects()
+
+    def clear_created_objects(self):
+        self.connection.delete_all_created_objects()

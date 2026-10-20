@@ -39,6 +39,8 @@ from discord.ext import commands
 from configuration import Suite
 from models import Division, Roster, Season
 
+from db import CreatedObject
+
 
 class SetupModal(discord.ui.Modal, title="Skapa kanaler"):
 
@@ -104,11 +106,28 @@ class SetupCog(commands.Cog):
         await self.clear_old_objects(guild)
 
     async def clear_old_objects(self, guild: Guild) -> None:
-        pass
+        objs: list[CreatedObject] = self.db.get_created_objects()
+        try:
+            for created_object in objs:
+                if created_object.type.type == "role":
+                    role: discord.Role = guild.get_role(created_object.id)
+                    if not role:
+                        continue
+                    await role.delete()
+                elif created_object.type.type == "category" or created_object.type.type == "text_channel" or created_object.type.type == "voice_channel":
+                    channel = guild.get_channel(created_object.id)
+                    if not channel:
+                        continue
+                    await channel.delete()
+                else:
+                    print("this shi cooked")
+            self.db.clear_created_objects()
+        except Exception as e:
+            print(e)
 
 
 async def create_role(guild: Guild, name: str) -> Role:
-    return await guild.create_role(name=name)
+    return await guild.create_role(name=name)       
 
 
 async def create_category(guild: Guild, name: str, overwrites: dict) -> CategoryChannel:

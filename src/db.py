@@ -140,3 +140,15 @@ class Connection:
         obj = obj[0]
         type = self.fetch_discord_object(type_id=obj[1])
         return CreatedObject(obj[0], type, obj[2], obj[3], obj[4])
+
+    def fetch_all_created_objects(self) -> list[CreatedObject]:
+        cursor = self.create_cursor()
+        sql_query = "SELECT * FROM created_object"
+        cursor.execute(sql_query)
+        objs = cursor.fetchall()
+        return [CreatedObject(o[0], DISCORD_OBJECTS[o[1]], o[2], o[3], o[4]) for o in objs]
+
+    def delete_all_created_objects(self) -> None:
+        cursor = self.create_cursor()
+        cursor.execute("TRUNCATE TABLE created_object")
+        self.connection.commit()
