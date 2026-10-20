@@ -1,3 +1,9 @@
+"""
+Script defining the different models used by the Dunderligan API
+as well as the Discord bot. The models are all dataclasses, defining
+their parameters alongside a from_json constructor.
+"""
+
 from dataclasses import dataclass
 
 
@@ -61,7 +67,9 @@ class Group:
     id: str
     name: str
     slug: str
-    rosters: list[Roster] # rosters may be an empty list, some requests return groups without rosters
+    rosters: list[
+        Roster
+    ]  # rosters may be an empty list, some requests return groups without rosters
 
     def from_json(json: dict):
         return Group(

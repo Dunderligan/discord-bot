@@ -52,7 +52,8 @@ def save_config(config: Config) -> None:
 
 class ConfigCog(commands.Cog):
     def __init__(self, suite: Suite):
-        self.config = suite.config
+        self.config = load_config()
+        suite.config = self.config
         self.api = suite.api
 
     @app_commands.command(name="set_captain_role", description="...")

@@ -4,7 +4,6 @@ from sys import exit
 from discord.ext.commands import Bot
 from dotenv import load_dotenv
 
-from cogs.config import Config, load_config
 from db_abstraction import DatabaseAbstraction
 from dunderligan_api import DunderliganAPI
 
@@ -34,13 +33,11 @@ class Configuration:
 class Suite:
     db: DatabaseAbstraction
     api: DunderliganAPI
-    config: Config
     configuration: Configuration
     bot: Bot
 
     def __init__(self, configuration: Configuration, bot: Bot):
         self.db = DatabaseAbstraction()
         self.api = DunderliganAPI(configuration)
-        self.config = load_config
         self.configuration = configuration
         self.bot = bot

@@ -24,7 +24,8 @@ async def setup_hook() -> None:
     """Called once when the bot is ready."""
     suite: Suite = Suite(configuration, bot)
 
-    cogs = [CheckinCog, SetupCog, ConfigCog, YoutubeCog]
+    # ConfigCog has to be the first element in the list, or else...
+    cogs = [ConfigCog, YoutubeCog, CheckinCog, SetupCog]
     for c in cogs:
         await bot.add_cog(c(suite))
 

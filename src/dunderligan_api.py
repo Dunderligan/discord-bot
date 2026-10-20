@@ -1,7 +1,13 @@
+"""
+Script defining an interface towards the Dunderligan API. 
+Currently keeps track of both Response-types and the specific
+requests the bot will make towards the API, might be separated in the
+future if there are many added response types.
+"""
+
 from dataclasses import dataclass
 from datetime import datetime
 
-from configuration import Configuration
 from models import Division, Player, Season
 from network import Network
 
@@ -15,7 +21,7 @@ class CheckinResponse:
     def from_json(json: dict):
         return CheckinResponse(
             json.get("discordId"),
-            datetime.datetime.fromisoformat(json.get("checkedInAt")),
+            datetime.fromisoformat(json.get("checkedInAt")),
             Player.from_json(json.get("player")),
         )
 
@@ -35,7 +41,7 @@ class DivisionResponse:
 
 
 class DunderliganAPI:
-    def __init__(self, configuration: Configuration):
+    def __init__(self, configuration):
         self.network: Network = Network(
             configuration.api_endpoint, configuration.api_key
         )
@@ -43,19 +49,18 @@ class DunderliganAPI:
     def checkin_player(
         self, season_id: str, discord_id: str, battletag: str
     ) -> CheckinResponse:
-        return self.network.request(
+        return self.network.post(
             f"checkin/{season_id}/{discord_id}",
-            "POST",
             {"battletag": battletag},
             CheckinResponse,
         )
 
     def get_seasons(self) -> list[Season]:
-        response: SeasonResponse = self.request("season", "GET", None, SeasonResponse)
+        response: SeasonResponse = self.get("season", SeasonResponse)
         return response.seasons
 
     def get_division(self, division_id: str) -> Division:
-        response: DivisionResponse = self.request(
-            f"division/{division_id}", "GET", None, DivisionResponse
+        response: DivisionResponse = self.get(
+            f"division/{division_id}", DivisionResponse
         )
         return response.division
