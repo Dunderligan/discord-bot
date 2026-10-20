@@ -1,14 +1,10 @@
-import datetime
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-from network import Network
 from requests import HTTPError
 
-import db_abstraction
-from cogs.config import Config
-from models import Player
+from configuration import Suite
+from dunderligan_api import CheckinResponse
 
 
 class CheckinModal(discord.ui.Modal, title="Incheckning"):
@@ -32,32 +28,11 @@ class CheckinModal(discord.ui.Modal, title="Incheckning"):
         )
 
 
-class CheckinResponse:
-    discord_id: str
-    checked_in_at: datetime.datetime
-    player: Player
-
-    def __init__(
-        self, discord_id: str, checked_in_at: datetime.datetime, player: Player
-    ):
-        self.discord_id = discord_id
-        self.checked_in_at = checked_in_at
-        self.player = player
-
-    def from_json(json: dict):
-        return CheckinResponse(
-            json.get("discordId"),
-            datetime.datetime.fromisoformat(json.get("checkedInAt")),
-            Player.from_json(json.get("player")),
-        )
-
-
 class CheckinCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, config: Config, network: Network, db: db_abstraction.DatabaseAbstraction):
-        self.bot = bot
-        self.config = config
-        self.network = network
-        self.db = db
+    def __init__(self, suite: Suite):
+        self.config = suite.config
+        self.api = suite.api
+        self.db = suite.db
 
     @app_commands.command(name="checkin", description="Check in as a player to the next season.")
     async def checkin(self, interaction: discord.Interaction):
@@ -77,15 +52,9 @@ class CheckinCog(commands.Cog):
         discord_id = interaction.user.id
         current_season_id = self.config.current_season_id
 
-        json = {"battletag": battletag}
         # TODO Store response in database for linking battletags to discord
         try:
-            response: CheckinResponse = self.network.request(
-                f"checkin/{current_season_id}/{discord_id}",
-                "POST",
-                json, 
-                CheckinResponse
-            )
+            response: CheckinResponse = self.api.checkin_player(current_season_id, discord_id, battletag)
             member = await interaction.guild.fetch_member(response.discord_id)
             if member:
                 await self.role_and_name_user(interaction.guild, member, response)

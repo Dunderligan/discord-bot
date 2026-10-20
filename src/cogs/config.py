@@ -3,6 +3,9 @@ import toml
 from discord import app_commands
 from discord.ext import commands
 
+from configuration import Suite
+from models import Season
+
 
 class Config:
     current_season_id: str = None
@@ -48,9 +51,9 @@ def save_config(config: Config) -> None:
 
 
 class ConfigCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, config: Config):
-        self.bot = bot
-        self.config = config
+    def __init__(self, suite: Suite):
+        self.config = suite.config
+        self.api = suite.api
 
     @app_commands.command(name="set_captain_role", description="...")
     @app_commands.describe(role="Roll som kaptener ska bli tilldelade.")
@@ -65,3 +68,42 @@ class ConfigCog(commands.Cog):
         self.config.notification_text_channel_id = channel.id
         save_config(self.config)
         await interaction.response.send_message(f"Set notifications channel to <#{channel.id}>", ephemeral=True)
+
+    class PickSeasonModal(discord.ui.Modal, title="Välj säsong"):
+        def __init__(self, config: Config, seasons: list[Season]):
+            super().__init__()
+            self.seasons = seasons
+            self.config = config
+            self.season = discord.ui.Label(
+                text="Säsong",
+                description="Välj nuvarande säsong.",
+                component=discord.ui.Select(
+                    options=[
+                        discord.SelectOption(label=s.name, value=s.id) for s in seasons
+                    ],
+                    required=True
+                )
+            )
+            self.add_item(self.season)
+
+
+        async def on_submit(self, interaction: discord.Interaction):
+            print(self.season.component.values)
+            self.config.current_season_id = self.season.component.values[0]
+            save_config(self.config)
+            await interaction.response.send_message(f"Successfully set current_season_id to {self.season.component.values[0]}", ephemeral=True)
+
+        async def on_error(self, interaction: discord.Interaction, error: Exception):
+            await interaction.response.send_message(
+                "Oj! Ett fel uppstod. Kontakta Admin om det kvarstår.", ephemeral=True
+            )
+            print(
+                f"Error occurred when user {interaction.user.global_name} tried changing current_season_id: {error}"
+            )
+
+    @app_commands.command(name="set_current_season", description="...")
+    async def set_current_season(self, interaction: discord.Interaction):
+        try:
+            await interaction.response.send_modal(self.PickSeasonModal(self.config, self.api.get_seasons()))
+        except Exception as e:
+            print(e)

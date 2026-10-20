@@ -1,18 +1,14 @@
 import json
 from datetime import datetime
 
-import os
-import dotenv
+import discord
 import requests
 from discord.ext import commands, tasks
-import discord
-from cogs.config import Config
+
+from configuration import Suite
 
 YOUTUBE_LINK = "https://youtu.be/ID"
 last_time_checked = datetime.now().astimezone(None)
-
-dotenv.load_dotenv()
-yt_token = os.getenv("YOUTUBE_API_KEY")
 
 class YoutubeIntegration:
     def __init__(self, api_key):
@@ -83,13 +79,13 @@ class YoutubeVideo:
 
 
 class YoutubeCog(commands.Cog):
-    def __init__(self, bot: commands.Bot, config: Config):
-        self.bot = bot
-        self.config = config
-        self.youtube_integration = YoutubeIntegration(yt_token)
+    def __init__(self, suite: Suite):
+        self.bot = suite.bot
+        self.config = suite.config
+        self.youtube_integration = YoutubeIntegration(suite.configuration.yt_api_key)
 
-        if config.monitored_yt_channel_ids:
-            for c in config.monitored_yt_channel_ids:
+        if suite.config.monitored_yt_channel_ids:
+            for c in suite.config.monitored_yt_channel_ids:
                 self.youtube_integration.monitor_channel(c)
 
         self.youtube_integration.add_new_video_callback(self.on_new_videos)
