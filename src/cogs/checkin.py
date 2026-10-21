@@ -5,27 +5,7 @@ from requests import HTTPError
 
 from configuration import Suite
 from dunderligan_api import CheckinResponse
-
-
-class CheckinModal(discord.ui.Modal, title="Incheckning"):
-    battletag = discord.ui.TextInput(
-        label="Battletag", placeholder="Skriv din battletag här..."
-    )
-
-    def __init__(self, callback):
-        self.callback = callback
-        super().__init__()
-
-    async def on_submit(self, interaction: discord.Interaction):
-        await self.callback(interaction, str(self.battletag))
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception):
-        await interaction.followup.send(
-            "Oj! Ett fel uppstod. Kontakta Admin om det kvarstår.", ephemeral=True
-        )
-        print(
-            f"Error occurred when user {interaction.user.global_name} tried checking in: {error}"
-        )
+from modal import get_input_modal
 
 
 class CheckinCog(commands.Cog):
@@ -38,7 +18,7 @@ class CheckinCog(commands.Cog):
     async def checkin(self, interaction: discord.Interaction):
         """Command to be used by players to check in before each season, confirming they are in the discord server and linking their battletag and discord-ids."""
         print(f"Recieved checkin command from {interaction.user}")
-        await interaction.response.send_modal(CheckinModal(self.checkin_player))
+        await interaction.response.send_modal(get_input_modal("Battletag", self.checkin_player))
 
     async def checkin_player(
         self, interaction: discord.Interaction, battletag: str

@@ -30,16 +30,13 @@ from discord import (
     Guild,
     Interaction,
     Role,
-    TextChannel,
-    VoiceChannel,
     app_commands,
 )
 from discord.ext import commands
 
 from configuration import Suite
-from models import Division, Roster, Season
-
 from db import CreatedObject
+from models import Division, Roster, Season
 
 
 class SetupModal(discord.ui.Modal, title="Skapa kanaler"):
