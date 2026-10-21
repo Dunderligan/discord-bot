@@ -36,51 +36,12 @@ from discord.ext import commands
 
 from configuration import Suite
 from db import CreatedObject
+from modal import get_selection_modal
 from models import Division, Roster, Season
 
 
-class SetupModal(discord.ui.Modal, title="Skapa kanaler"):
-
-
-    def __init__(self, callback, seasons: list[Season]):
-        super().__init__()
-        self.seasons = seasons
-        self.callback = callback
-        self.add_item(discord.ui.Label(
-            text="Säsong",
-            description="Välj säsong att skapa kanaler för:",
-            component=discord.ui.Select(
-            placeholder="Välj säsong...",
-            options=[
-                discord.SelectOption(
-                    label=s.name,
-                    value=s.id,
-                )
-                for s in seasons
-            ],
-            required=True
-        )))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        await self.callback(
-            interaction.guild,
-            filter(lambda s: s.id == self.season.values[0], self.seasons)[0],
-        )
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception):
-        await interaction.followup.send(
-            "Oj! Ett fel uppstod. Kontakta Admin om det kvarstår.", ephemeral=True
-        )
-        print(
-            f"Error occurred when user {interaction.user.global_name} tried setting up channels: {error}"
-        )
-
-
 class SetupCog(commands.Cog):
-    def __init__(
-        self,
-        suite: Suite
-    ):
+    def __init__(self, suite: Suite):
         self.config = suite.config
         self.api = suite.api
         self.db = suite.db
@@ -91,16 +52,20 @@ class SetupCog(commands.Cog):
     )
     async def setup_channels(self, interaction: Interaction):
         try:
-            await interaction.response.send_modal(
-                SetupModal(self.generate_season, self.api.get_seasons())
-            )
+            self.seasons: list[Season] = self.api.get_seasons()
+            modal: discord.ui.Modal = get_selection_modal("Säsong", (s.name for s in self.seasons), (s.id for s in self.seasons))
+            await interaction.response.send_modal(modal)
+            await modal.wait()
+            print(modal.value)
+            await self.generate_season(interaction, modal.vae)
         except Exception as e:
-            print(e)
+            print(e.with_traceback())
 
-    async def generate_season(self, guild: Guild, season: Season):
-        await self.clear_old_objects(guild)
+    async def generate_season(self, interaction: Interaction, season_id: str):
+        await self.clear_old_objects(interaction.guild)
+        season = next(s for s in self.seasons if s.id == season_id)
         for division in season.divisions:
-            await generate_division(guild, division, season)
+            await generate_division(interaction.guild, division, season)
 
     async def clear_old_objects(self, guild: Guild) -> None:
         objs: list[CreatedObject] = self.db.get_created_objects()
@@ -111,7 +76,11 @@ class SetupCog(commands.Cog):
                     if not role:
                         continue
                     await role.delete()
-                elif created_object.type.type == "category" or created_object.type.type == "text_channel" or created_object.type.type == "voice_channel":
+                elif (
+                    created_object.type.type == "category"
+                    or created_object.type.type == "text_channel"
+                    or created_object.type.type == "voice_channel"
+                ):
                     channel = guild.get_channel(created_object.id)
                     if not channel:
                         continue
@@ -124,7 +93,7 @@ class SetupCog(commands.Cog):
 
 
 async def create_role(guild: Guild, name: str) -> Role:
-    return await guild.create_role(name=name)       
+    return await guild.create_role(name=name)
 
 
 async def create_category(guild: Guild, name: str, overwrites: dict) -> CategoryChannel:
@@ -141,10 +110,22 @@ async def create_channel(
 
 async def generate_division(guild: Guild, division: Division, season: Season) -> None:
     div_cat = await create_category(guild, f"{season.name} - {division.name}", {})
-    short_div = "div" + division.slug if division.slug.isdigit() else "ds" if division.slug == "dunderserien" else "???"
+    short_div = (
+        "div" + division.slug
+        if division.slug.isdigit()
+        else "ds"
+        if division.slug == "dunderserien"
+        else "???"
+    )
     suffix = f"{short_div}-{season.slug[0]}{season.slug[-1]}"
 
-    channels = ["spelschema", "tabell", "information", "spelartrupper", "rapportera-bans"]
+    channels = [
+        "spelschema",
+        "tabell",
+        "information",
+        "spelartrupper",
+        "rapportera-bans",
+    ]
     for c in channels:
         await create_channel(guild, f"{c}-{suffix}", div_cat, {})
 

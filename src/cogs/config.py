@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from configuration import Suite
+from modal import get_selection_modal
 from models import Season
 
 
@@ -105,6 +106,10 @@ class ConfigCog(commands.Cog):
     @app_commands.command(name="set_current_season", description="...")
     async def set_current_season(self, interaction: discord.Interaction):
         try:
-            await interaction.response.send_modal(self.PickSeasonModal(self.config, self.api.get_seasons()))
+            seasons = self.api.get_seasons()
+            modal: discord.ui.Modal = get_selection_modal("Säsong", (s.name for s in seasons), (s.id for s in seasons))
+            await interaction.response.send_modal(modal)
+            await modal.wait()
+            self.config.current_season_id = modal.value            
         except Exception as e:
             print(e)

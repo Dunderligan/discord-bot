@@ -56,11 +56,11 @@ class DunderliganAPI:
         )
 
     def get_seasons(self) -> list[Season]:
-        response: SeasonResponse = self.get("season", SeasonResponse)
+        response: SeasonResponse = self.network.get("season", SeasonResponse)
         return response.seasons
 
     def get_division(self, division_id: str) -> Division:
-        response: DivisionResponse = self.get(
+        response: DivisionResponse = self.network.get(
             f"division/{division_id}", DivisionResponse
         )
         return response.division

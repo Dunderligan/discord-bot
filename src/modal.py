@@ -2,7 +2,7 @@ from discord import Interaction, SelectOption
 from discord.ui import Label, Modal, Select, TextInput
 
 
-def get_selection_modal(name: str, choices: list[str], callback) -> Modal:
+def get_selection_modal(name: str, labels: list[str], values: list[str]) -> Modal:
     class SimpleModal(Modal, title=f"Välj {name}"):
             def __init__(self):
                 super().__init__()
@@ -13,17 +13,19 @@ def get_selection_modal(name: str, choices: list[str], callback) -> Modal:
                         placeholder=f"{name}",
                         options=[
                             SelectOption(
-                                label=c.title(),
-                                value=c,
+                                label=labels[i],
+                                value=values[i],
                             )
-                            for c in choices
+                            for i in range(len(values))
                         ],
                         required=True
                 ))
                 self.add_item(self.selection)
+                self.value = None
     
             async def on_submit(self, interaction: Interaction) -> None:
-                await callback(interaction, self.selection.component.values[0])
+                self.value = self.selection.component.values[0]
+                self.stop()
     
             async def on_error(self, interaction: Interaction, error: Exception) -> None:
                 print(error)
