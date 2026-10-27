@@ -1,5 +1,6 @@
-from discord import Interaction, SelectOption
 from discord.ui import Label, Modal, Select, TextInput
+
+from discord import Interaction, SelectOption
 
 
 def get_selection_modal(name: str, labels: list[str], values: list[str]) -> Modal:

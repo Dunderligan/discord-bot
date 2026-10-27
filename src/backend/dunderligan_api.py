@@ -8,8 +8,8 @@ future if there are many added response types.
 from dataclasses import dataclass
 from datetime import datetime
 
+from backend.network import Network
 from models import Division, Player, Season
-from network import Network
 
 
 @dataclass

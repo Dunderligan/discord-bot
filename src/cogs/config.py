@@ -1,10 +1,10 @@
-import discord
 import toml
-from discord import app_commands
+from configuration import Suite
 from discord.ext import commands
 
-from configuration import Suite
-from modal import get_selection_modal
+import discord
+from discord import app_commands
+from discord.modal import get_selection_modal
 from models import Season
 
 

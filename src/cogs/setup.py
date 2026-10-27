@@ -24,7 +24,11 @@ Currently, the structure will be as follows:
             <Team> [see, connect, and speak for teams role, hidden for others], limited to 5 members
 """
 
+from configuration import Suite
+from discord.ext import commands
+
 import discord
+from backend.sqlite_database import CreatedObject
 from discord import (
     CategoryChannel,
     Guild,
@@ -32,11 +36,7 @@ from discord import (
     Role,
     app_commands,
 )
-from discord.ext import commands
-
-from configuration import Suite
-from db import CreatedObject
-from modal import get_selection_modal
+from discord.modal import get_selection_modal
 from models import Division, Roster, Season
 
 
