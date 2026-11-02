@@ -41,5 +41,11 @@ class Bot:
             print(f"Recieved checkin command from {interaction.user}")
             await self.interface.checkin_user(interaction)
 
+        @self.bot.tree.command(description="Setup up discord channels for current season of Dunderligan.", guild=self.guild)
+        async def setup(interaction: discord.Interaction):
+            """Creates categories, channels, and roles for current season."""
+            print(f"Recieved setup command from user {interaction.user}")
+            await self.interface.setup(interaction)
+
     def get_tasks(self):
         return [self._start_bot()]

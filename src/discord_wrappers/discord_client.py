@@ -1,10 +1,10 @@
-from discord import Interaction, Role
+from discord import CategoryChannel, Guild, Interaction, Role
 
 from backend.backend_client import Backend
 from backend.network import RejectedRequest
 from config import Config
 from discord_wrappers import edit_guild, send_modal
-from models import Player
+from models import Division, Player
 
 current_season_id = "da4f6b34-ca5d-40f2-9810-3bf6bd103ae1"
 
@@ -44,5 +44,29 @@ class DiscordHandler:
 
         await interaction.followup.send(content="Completed checkin.", ephemeral=True)
 
+    async def setup(self, interaction: Interaction) -> None:
+        pass
+
     def get_tasks(self):
         return []
+
+
+async def _create_category(guild: Guild, division: Division):
+    short_name = (
+        "div" + division.slug
+        if division.slug.isdigit()
+        else "ds"
+        if division.slug == "dunderserien"
+        else "???"
+    )
+    suffix = f"{short_name}"
+
+    category: CategoryChannel = await edit_guild.create_category_channel(guild, f"{division.name}")
+
+    channels = [
+        "spelschema",
+        "tabell",
+        "information",
+        "spelartrupper",
+        "rapportera-bans",
+    ]
