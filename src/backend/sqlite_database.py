@@ -96,6 +96,9 @@ class Connection:
         )
         self.connection.commit()
 
+    def insert_created_objects(self, objs: list[CreatedObject]) -> None:
+        pass
+
     def insert_linked_user(self, user: LinkedUser) -> None:
         cursor = self.create_cursor()
         cursor.execute(

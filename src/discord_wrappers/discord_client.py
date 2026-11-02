@@ -4,7 +4,7 @@ from backend.backend_client import Backend
 from backend.network import RejectedRequest
 from config import Config
 from discord_wrappers import edit_guild, send_modal
-from models import Division, Player
+from models import Division, Player, Season
 
 current_season_id = "da4f6b34-ca5d-40f2-9810-3bf6bd103ae1"
 
@@ -45,23 +45,29 @@ class DiscordHandler:
         await interaction.followup.send(content="Completed checkin.", ephemeral=True)
 
     async def setup(self, interaction: Interaction) -> None:
-        pass
+        try:
+            await interaction.response.send_message("Creating channels...", ephemeral=True)
+            season: Season = self.backend.get_season(current_season_id)
+            await _create_category(interaction.guild, season, season.divisions[0])
+            await interaction.followup.send("Successfully created channels.", ephemeral=True)
+        except Exception as e:
+            print(e)
 
     def get_tasks(self):
         return []
 
 
-async def _create_category(guild: Guild, division: Division):
-    short_name = (
+async def _create_category(guild: Guild, season: Season, division: Division):
+    div_short_name = (
         "div" + division.slug
         if division.slug.isdigit()
         else "ds"
         if division.slug == "dunderserien"
         else "???"
     )
-    suffix = f"{short_name}"
+    suffix = f"{div_short_name}-s{season.slug[-1]}"
 
-    category: CategoryChannel = await edit_guild.create_category_channel(guild, f"{division.name}")
+    category: CategoryChannel = await edit_guild.create_category_channel(guild, f"{season.name} - {division.name}", {})
 
     channels = [
         "spelschema",
@@ -70,3 +76,6 @@ async def _create_category(guild: Guild, division: Division):
         "spelartrupper",
         "rapportera-bans",
     ]
+
+    for c in channels:
+        await edit_guild.create_text_channel(category, f"{c}-{suffix}", {})

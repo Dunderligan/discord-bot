@@ -22,3 +22,6 @@ class DatabaseAbstraction:
 
     def clear_created_objects(self):
         self.connection.delete_all_created_objects()
+
+    def store_created_text_channels(self, channels: list, season_id: str, division_id: str, team_id: str) -> None:
+        pass
