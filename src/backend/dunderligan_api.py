@@ -48,12 +48,13 @@ class DunderliganAPI:
 
     def checkin_player(
         self, season_id: str, discord_id: str, battletag: str
-    ) -> CheckinResponse:
-        return self.network.post(
+    ) -> Player:
+        response: CheckinResponse = self.network.post(
             f"checkin/{season_id}/{discord_id}",
             {"battletag": battletag},
             CheckinResponse,
         )
+        return response.player
 
     def get_seasons(self) -> list[Season]:
         response: SeasonResponse = self.network.get("season", SeasonResponse)

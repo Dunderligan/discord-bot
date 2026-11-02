@@ -7,6 +7,12 @@ if script will make requests to different APIs.
 import requests
 
 
+class RejectedRequest(Exception):
+    def __init__(self, error_code: int):
+        self.error_code = error_code
+        super().__init__()
+
+
 class Network:
     def __init__(self, api_endpoint: str, api_key: str):
         self.api_endpoint = api_endpoint
@@ -20,7 +26,7 @@ class Network:
         )
         if response.status_code == 200:
             return response_type.from_json(response.json())
-        response.raise_for_status()
+        raise RejectedRequest(response.status_code)
 
     def post(self, endpoint: str, json: dict, response_type):
         """Standard method for making a POST request to the API."""
@@ -29,4 +35,4 @@ class Network:
         )
         if response.status_code == 200:
             return response_type.from_json(response.json())
-        response.raise_for_status()
+        raise RejectedRequest(response.status_code)

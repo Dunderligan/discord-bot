@@ -1,11 +1,11 @@
+import discord
 from configuration import Suite
+from discord import app_commands
+from discord._modal import get_input_modal
 from discord.ext import commands
 from requests import HTTPError
 
-import discord
 from backend.dunderligan_api import CheckinResponse
-from discord import app_commands
-from discord.modal import get_input_modal
 
 
 class CheckinCog(commands.Cog):

@@ -4,7 +4,7 @@ from discord.ext import commands
 
 import discord
 from discord import app_commands
-from discord.modal import get_selection_modal
+from discord._modal import get_selection_modal
 from models import Season
 
 

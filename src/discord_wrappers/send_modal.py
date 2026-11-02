@@ -1,6 +1,5 @@
-from discord.ui import Label, Modal, TextInput
-
 from discord import Interaction
+from discord.ui import Label, Modal, TextInput
 
 
 class TextInputModal(Modal, title="Placeholder"):
@@ -16,10 +15,12 @@ class TextInputModal(Modal, title="Placeholder"):
 
     async def on_submit(self, interaction: Interaction):
         self.value = self.input.component.value
+        await interaction.response.send_message("Försöker checka in...", ephemeral=True)
         self.stop()
 
     async def on_error(self, interaction: Interaction, error: Exception):
         print(error)
+        await interaction.response.send_message("Något gick fel. Kontakta admin.")
         return await super().on_error(interaction, error)
 
 
