@@ -1,4 +1,4 @@
-from discord import CategoryChannel, Guild, Interaction, Role
+from discord import CategoryChannel, Guild, Interaction, Role, TextChannel
 
 from backend.backend_client import Backend
 from backend.network import RejectedRequest
@@ -46,10 +46,12 @@ class DiscordHandler:
 
     async def setup(self, interaction: Interaction) -> None:
         try:
-            await interaction.response.send_message("Creating channels...", ephemeral=True)
+            await interaction.response.send_message("Removing old channels...", ephemeral=True)
+            await self._clear_old_objects(interaction.guild)
+            await interaction.edit_original_response(content="Creating channels...")
             season: Season = self.backend.get_season(current_season_id)
-            await _create_category(interaction.guild, season, season.divisions[0])
-            await interaction.followup.send("Successfully created channels.", ephemeral=True)
+            await self._create_category(interaction.guild, season, season.divisions[0])
+            await interaction.edit_original_response(content="Successfully created channels.")
         except Exception as e:
             print(e)
 
@@ -57,25 +59,32 @@ class DiscordHandler:
         return []
 
 
-async def _create_category(guild: Guild, season: Season, division: Division):
-    div_short_name = (
-        "div" + division.slug
-        if division.slug.isdigit()
-        else "ds"
-        if division.slug == "dunderserien"
-        else "???"
-    )
-    suffix = f"{div_short_name}-s{season.slug[-1]}"
+    async def _clear_old_objects(self, guild: Guild):
+        old_objects = self.backend.get_old_object_ids()
+        for o in old_objects:
+            await edit_guild.delete_from_id(guild, o)
 
-    category: CategoryChannel = await edit_guild.create_category_channel(guild, f"{season.name} - {division.name}", {})
+    async def _create_category(self, guild: Guild, season: Season, division: Division):
+        div_short_name = (
+            "div" + division.slug
+            if division.slug.isdigit()
+            else "ds"
+            if division.slug == "dunderserien"
+            else "???"
+        )
+        suffix = f"{div_short_name}-s{season.slug[-1]}"
 
-    channels = [
-        "spelschema",
-        "tabell",
-        "information",
-        "spelartrupper",
-        "rapportera-bans",
-    ]
+        category: CategoryChannel = await edit_guild.create_category_channel(guild, f"{season.name} - {division.name}", {})
+        self.backend.store_category_id(category.id, season.id, division.id)
 
-    for c in channels:
-        await edit_guild.create_text_channel(category, f"{c}-{suffix}", {})
+        channels = [
+            "spelschema",
+            "tabell",
+            "information",
+            "spelartrupper",
+            "rapportera-bans",
+        ]
+
+        for c in channels:
+            channel: TextChannel = await edit_guild.create_text_channel(category, f"{c}-{suffix}", {})
+            self.backend.store_text_channel_id(channel.id, season.id, division.id, None)

@@ -25,5 +25,4 @@ async def main():
     interface: Interface = Interface()
     await asyncio.gather(*interface._gather_tasks())
 
-
 asyncio.run(main())

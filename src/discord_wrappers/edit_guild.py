@@ -1,3 +1,5 @@
+from asyncio import sleep
+
 from discord import (
     CategoryChannel,
     Forbidden,
@@ -13,6 +15,7 @@ from discord import (
 async def give_member_roles(member: Member, roles: list[Role]) -> None:
     """Gives member roles in list, assuming bot has sufficient permissions."""
     try:
+        await sleep(0.2)
         await member.add_roles(*roles)
     except Forbidden:
         raise Forbidden(f"Bot lacking permissions to give user {member.name} roles.")
@@ -25,6 +28,7 @@ async def rename_member(member: Member, nickname: str | None = None) -> None:
         # trims nickname so it doesn't exceed 32 character limit
         nickname = nickname[:31]
     try:
+        await sleep(0.2)
         await member.edit(nick=nickname)
     except Forbidden:
         raise Forbidden(f"Bot lacking permissions to rename user {member.name}")
@@ -33,6 +37,7 @@ async def rename_member(member: Member, nickname: str | None = None) -> None:
 async def create_text_channel(category: CategoryChannel, name: str, overwrites: dict[Role, PermissionOverwrite]) -> TextChannel:
     """Creates a text channel within the given category."""
     try:
+        await sleep(0.2)
         return await category.create_text_channel(name=name, overwrites=overwrites)
     except Forbidden:
         raise Forbidden("Bot lacking permissions to create text channel")
@@ -43,6 +48,7 @@ async def create_text_channel(category: CategoryChannel, name: str, overwrites: 
 async def create_voice_channel(category: CategoryChannel, name: str, overwrites: dict[Role, PermissionOverwrite], user_limit: int = 0) -> VoiceChannel:
     """Creates a voice channel within the given category."""
     try:
+        await sleep(0.2)
         return await category.create_voice_channel(name=name, overwrites=overwrites, user_limit=user_limit)
     except Forbidden:
         raise Forbidden("Bot lacking permissions to create voice channel")
@@ -53,6 +59,7 @@ async def create_voice_channel(category: CategoryChannel, name: str, overwrites:
 async def create_category_channel(guild: Guild, name: str, overwrites: dict[Role, PermissionOverwrite]) -> CategoryChannel:
     """Creates a category channel in the given guild."""
     try:
+        await sleep(0.2)
         return await guild.create_category(name=name, overwrites=overwrites)
     except Forbidden:
         raise Forbidden("Bot lacking permissions to create category")
@@ -63,6 +70,20 @@ async def create_category_channel(guild: Guild, name: str, overwrites: dict[Role
 async def create_role(guild: Guild, name: str) -> Role:
     """Creates a role in the given guild."""
     try:
+        await sleep(0.2)
         return await guild.create_role(name=name, hoist=True, mentionable=True)
+    except Forbidden:
+        raise Forbidden("Bot lacking permissions to create role")
+
+
+async def delete_from_id(guild: Guild, id: int) -> None:
+    """Deletes a role, channel, or category from the guild."""
+    try:
+        await sleep(0.2)
+        matches = list(filter(lambda o: o.id == id, list(guild.channels) + list(guild.roles)))
+        if len(matches) != 1:
+            print("Found 0 or too many matching objects.")
+            return
+        await matches[0].delete()
     except Forbidden:
         raise Forbidden("Bot lacking permissions to create role")
